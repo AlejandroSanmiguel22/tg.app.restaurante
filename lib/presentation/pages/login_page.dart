@@ -1,0 +1,220 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../bloc/login_bloc.dart';
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({Key? key}) : super(key: key);
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _userController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _obscureText = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          Positioned(
+            top: 50,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/images/logo.png', 
+              width: MediaQuery.of(context).size.width,
+              fit: BoxFit.fitWidth,
+              
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 75.0),
+                child: Column(
+                  children: [
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.30),
+                    const Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Iniciar Sesión',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 60),
+
+                    // Campo de usuario
+                    Container(
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.black, width: 1),
+                        ),
+                      ),
+                      child: TextField(
+                        controller: _userController,
+                        style: const TextStyle(fontFamily: 'Poppins'),
+                        decoration: InputDecoration(
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/mail.svg',
+                              width: 20,
+                              height: 20,
+                            ),
+                          ),
+                          labelText: 'Nombre de Usuario',
+                          labelStyle: const TextStyle(
+                            color: Colors.grey,
+                            fontFamily: 'Poppins',
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Campo de contraseña
+                    Container(
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.black, width: 1),
+                        ),
+                      ),
+                      child: TextField(
+                        controller: _passwordController,
+                        obscureText: _obscureText,
+                        style: const TextStyle(fontFamily: 'Poppins'),
+                        decoration: InputDecoration(
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/password.svg',
+                              width: 20,
+                              height: 20,
+                            ),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: SvgPicture.asset(
+                              _obscureText
+                                  ? 'assets/icons/eye-closed.svg'
+                                  : 'assets/icons/eye.svg',
+                              width: 20,
+                              height: 20,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureText = !_obscureText;
+                              });
+                            },
+                          ),
+                          labelText: 'Contraseña',
+                          labelStyle: const TextStyle(
+                            color: Colors.grey,
+                            fontFamily: 'Poppins',
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Enlace de contraseña olvidada
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {},
+                        child: const Text(
+                          '¿Olvidaste tu contraseña?',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 64),
+
+                    // Botón de iniciar sesión
+                    BlocConsumer<LoginBloc, LoginState>(
+                      listener: (context, state) {
+                        if (state is LoginFailure) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(state.error)));
+                        }
+                        if (state is LoginSuccess) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (_) => const Placeholder(),
+                            ),
+                            (route) => false,
+                          );
+                        }
+                      },
+                      builder: (context, state) {
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFC83636),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(32),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              elevation: 5,
+                            ),
+                            onPressed: state is LoginLoading
+                                ? null
+                                : () {
+                                    BlocProvider.of<LoginBloc>(context).add(
+                                      LoginButtonPressed(
+                                        userName: _userController.text,
+                                        password: _passwordController.text,
+                                      ),
+                                    );
+                                  },
+                            child: state is LoginLoading
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : const Text(
+                                    'Iniciar',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

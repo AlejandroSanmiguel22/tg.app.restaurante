@@ -2,22 +2,47 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
+import 'data/datasources/login_datasource.dart';
+import 'data/repositories/login_repository_impl.dart';
+import 'domain/usecases/login_usecase.dart';
+import 'presentation/bloc/login_bloc.dart';
+import 'presentation/pages/login_page.dart';
+import 'core/theme/app_theme.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token');
+  runApp(MyApp(token: token));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String? token;
+  const MyApp({super.key, this.token});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Prueba Impresora Bluetooth',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => LoginBloc(
+            LoginUseCase(
+              LoginRepositoryImpl(
+                LoginDatasourceImpl(Dio()),
+              ),
+            ),
+          ),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'TG Restaurante',
+        theme: AppTheme.lightTheme,
+        home: token == null ? const LoginPage() : const Placeholder(),
       ),
-      home: const BluetoothPrintTestPage(),
     );
   }
 }
