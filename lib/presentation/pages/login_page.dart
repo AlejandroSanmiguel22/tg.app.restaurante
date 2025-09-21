@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../bloc/login_bloc.dart';
 import 'dashboard_page.dart';
+import '../../core/services/snackbar_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -153,19 +154,19 @@ class _LoginPageState extends State<LoginPage> {
                     BlocConsumer<LoginBloc, LoginState>(
                       listener: (context, state) {
                         if (state is LoginFailure) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                state.error,
-                                style: const TextStyle(fontFamily: 'Poppins'),
-                              ),
-                              backgroundColor: const Color(0xFFC83636),
-                            ),
+                          SnackBarService.showError(
+                            context: context,
+                            title: 'Error de Autenticación',
+                            message: "Porfavor, verifica tus credenciales",
                           );
                         }
                         if (state is LoginSuccess) {
+                          SnackBarService.showSuccess(
+                            context: context,
+                            title: '¡Bienvenido!',
+                            message: 'Has iniciado sesión correctamente',
+                          );
                           // La navegación se maneja automáticamente por AuthWrapper
-                          // No necesitamos navegar manualmente aquí
                         }
                       },
                       builder: (context, state) {

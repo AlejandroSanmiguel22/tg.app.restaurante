@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/login_bloc.dart';
+import '../../core/services/snackbar_service.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({Key? key}) : super(key: key);
@@ -53,6 +54,12 @@ class DashboardPage extends StatelessWidget {
                         ),
                         onPressed: () {
                           Navigator.of(context).pop();
+                          // Mostrar mensaje de logout
+                          SnackBarService.showInfo(
+                            context: context,
+                            title: 'Sesión Cerrada',
+                            message: 'Has cerrado sesión correctamente',
+                          );
                           // Trigger logout
                           context.read<LoginBloc>().add(LogoutPressed());
                         },
