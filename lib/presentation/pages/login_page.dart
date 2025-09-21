@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../bloc/login_bloc.dart';
+import 'dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -22,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
       body: Stack(
         children: [
           Positioned(
-            top: 50,
+            top: 37,
             left: 0,
             right: 0,
             child: Image.asset(
@@ -44,7 +45,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: Text(
                         'Iniciar Sesión',
                         style: TextStyle(
-                          fontSize: 32,
+                          fontSize: 40,
                           fontWeight: FontWeight.w900,
                           color: Colors.black,
                           fontFamily: 'Poppins',
@@ -74,17 +75,14 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           labelText: 'Nombre de Usuario',
                           labelStyle: const TextStyle(
-                            color: Colors.grey,
+                            color: Color(0xFF7C838A),
                             fontFamily: 'Poppins',
                           ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Campo de contraseña
                     Container(
@@ -122,12 +120,12 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           labelText: 'Contraseña',
                           labelStyle: const TextStyle(
-                            color: Colors.grey,
+                            color: Color(0xFF7C838A),
                             fontFamily: 'Poppins',
                           ),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
-                            vertical: 16,
+                            vertical: 8,
                           ),
                         ),
                       ),
@@ -155,17 +153,19 @@ class _LoginPageState extends State<LoginPage> {
                     BlocConsumer<LoginBloc, LoginState>(
                       listener: (context, state) {
                         if (state is LoginFailure) {
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text(state.error)));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                state.error,
+                                style: const TextStyle(fontFamily: 'Poppins'),
+                              ),
+                              backgroundColor: const Color(0xFFC83636),
+                            ),
+                          );
                         }
                         if (state is LoginSuccess) {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (_) => const Placeholder(),
-                            ),
-                            (route) => false,
-                          );
+                          // La navegación se maneja automáticamente por AuthWrapper
+                          // No necesitamos navegar manualmente aquí
                         }
                       },
                       builder: (context, state) {

@@ -11,18 +11,16 @@ import 'data/repositories/login_repository_impl.dart';
 import 'domain/usecases/login_usecase.dart';
 import 'presentation/bloc/login_bloc.dart';
 import 'presentation/pages/login_page.dart';
+import 'presentation/pages/dashboard_page.dart';
 import 'core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('token');
-  runApp(MyApp(token: token));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final String? token;
-  const MyApp({super.key, this.token});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -35,13 +33,40 @@ class MyApp extends StatelessWidget {
                 LoginDatasourceImpl(Dio()),
               ),
             ),
-          ),
+          )..add(CheckAuthStatus()), // Verificar sesión al iniciar
         ),
       ],
       child: MaterialApp(
         title: 'TG Restaurante',
+        debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: token == null ? const LoginPage() : const Placeholder(),
+        home: const AuthWrapper(),
+      ),
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<LoginBloc, LoginState>(
+      listener: (context, state) {
+        if (state is LoggedOut) {
+          // Si se hace logout, no necesitamos navegar porque el builder ya maneja esto
+        }
+      },
+      child: BlocBuilder<LoginBloc, LoginState>(
+        builder: (context, state) {
+          // Si hay sesión activa, ir a dashboard
+          if (state is AuthenticatedFromSession || state is LoginSuccess) {
+            return const DashboardPage();
+          }
+          
+          // Para todos los demás casos (LoginInitial, LoginFailure, LoggedOut), mostrar login
+          return const LoginPage();
+        },
       ),
     );
   }
