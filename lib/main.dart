@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
           create: (_) => LoginBloc(
             LoginUseCase(
               LoginRepositoryImpl(
-                LoginDatasourceImpl(Dio()),
+                LoginDatasourceImpl(_createDioClient()),
               ),
             ),
           )..add(CheckAuthStatus()), // Verificar sesión al iniciar
@@ -43,6 +43,15 @@ class MyApp extends StatelessWidget {
         home: const AuthWrapper(),
       ),
     );
+  }
+
+  /// Crear cliente Dio con configuración de timeout
+  Dio _createDioClient() {
+    final dio = Dio();
+    dio.options.connectTimeout = const Duration(minutes: 2);
+    dio.options.receiveTimeout = const Duration(minutes: 2);
+    dio.options.sendTimeout = const Duration(minutes: 2);
+    return dio;
   }
 }
 

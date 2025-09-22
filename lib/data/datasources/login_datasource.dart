@@ -13,16 +13,31 @@ class LoginDatasourceImpl implements LoginDatasource {
 
   @override
   Future<Map<String, dynamic>> login({required String userName, required String password}) async {
-    final response = await dio.post(
-      AppConfig.loginUrl,
-      data: {
-        'userName': userName,
-        'password': password,
-      },
-    );
-    // Ejemplo de guardado de token (la lógica real irá en el Bloc o repositorio)
-    // final prefs = await SharedPreferences.getInstance();
-    // await prefs.setString('token', response.data['token']);
-    return response.data;
+    print('🔵 LoginDatasource: Iniciando login...');
+    print('🔵 URL: ${AppConfig.loginUrl}');
+    print('🔵 Usuario: $userName');
+    print('🔵 Connect Timeout: ${dio.options.connectTimeout}');
+    print('🔵 Receive Timeout: ${dio.options.receiveTimeout}');
+    print('🔵 Send Timeout: ${dio.options.sendTimeout}');
+    
+    try {
+      final response = await dio.post(
+        AppConfig.loginUrl,
+        data: {
+          'userName': userName,
+          'password': password,
+        },
+      );
+      
+      print('✅ LoginDatasource: Respuesta exitosa');
+      print('✅ Status Code: ${response.statusCode}');
+      print('✅ Data: ${response.data}');
+      
+      return response.data;
+    } catch (e) {
+      print('❌ LoginDatasource: Error en login');
+      print('❌ Error: $e');
+      rethrow;
+    }
   }
 } 

@@ -40,9 +40,17 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   LoginBloc(this.loginUseCase) : super(LoginInitial()) {
     // Evento de login
     on<LoginButtonPressed>((event, emit) async {
+      print('🟡 LoginBloc: Iniciando proceso de login');
+      print('🟡 Usuario: ${event.userName}');
+      
       emit(LoginLoading());
       try {
+        print('🟡 LoginBloc: Llamando a usecase...');
         final response = await loginUseCase(userName: event.userName, password: event.password);
+        
+        print('🟢 LoginBloc: Respuesta recibida del usecase');
+        print('🟢 Token: ${response.token}');
+        print('🟢 Usuario: ${response.user.userName}');
         
         // Guardar sesión usando AuthService
         await AuthService.saveSession(
@@ -52,8 +60,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           userRole: response.user.role,
         );
         
+        print('🟢 LoginBloc: Sesión guardada, emitiendo LoginSuccess');
         emit(LoginSuccess(response));
       } catch (e) {
+        print('🔴 LoginBloc: Error en login');
+        print('🔴 Error: $e');
         emit(LoginFailure(e.toString()));
       }
     });
