@@ -137,7 +137,13 @@ class _LoginPageState extends State<LoginPage> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          SnackBarService.showInfo(
+                            context: context,
+                            title: 'Ups, lamentamos esto.',
+                            message: 'Comunicate con tu Jefe, el es el unico que te puede proporciona la contraseña o generar una nueva.',
+                          );
+                        },
                         child: const Text(
                           '¿Olvidaste tu contraseña?',
                           style: TextStyle(
