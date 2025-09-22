@@ -2,8 +2,20 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
+import 'data/datasources/login_datasource.dart';
+import 'data/repositories/login_repository_impl.dart';
+import 'domain/usecases/login_usecase.dart';
+import 'presentation/bloc/login_bloc.dart';
+import 'presentation/pages/login_page.dart';
+import 'presentation/pages/dashboard_page.dart';
+import 'core/theme/app_theme.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -12,12 +24,59 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Prueba Impresora Bluetooth',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => LoginBloc(
+            LoginUseCase(
+              LoginRepositoryImpl(
+                LoginDatasourceImpl(_createDioClient()),
+              ),
+            ),
+          )..add(CheckAuthStatus()), // Verificar sesión al iniciar
+        ),
+      ],
+      child: MaterialApp(
+        title: 'TG Restaurante',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: const AuthWrapper(),
       ),
-      home: const BluetoothPrintTestPage(),
+    );
+  }
+
+  /// Crear cliente Dio con configuración de timeout
+  Dio _createDioClient() {
+    final dio = Dio();
+    dio.options.connectTimeout = const Duration(minutes: 2);
+    dio.options.receiveTimeout = const Duration(minutes: 2);
+    dio.options.sendTimeout = const Duration(minutes: 2);
+    return dio;
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<LoginBloc, LoginState>(
+      listener: (context, state) {
+        if (state is LoggedOut) {
+          // Si se hace logout, no necesitamos navegar porque el builder ya maneja esto
+        }
+      },
+      child: BlocBuilder<LoginBloc, LoginState>(
+        builder: (context, state) {
+          // Si hay sesión activa, ir a dashboard
+          if (state is AuthenticatedFromSession || state is LoginSuccess) {
+            return const DashboardPage();
+          }
+          
+          // Para todos los demás casos (LoginInitial, LoginFailure, LoggedOut), mostrar login
+          return const LoginPage();
+        },
+      ),
     );
   }
 }
