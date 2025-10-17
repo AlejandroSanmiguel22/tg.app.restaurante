@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../bloc/table_bloc.dart';
 import '../../domain/entities/table_entity.dart';
 import '../widgets/table_card_widget.dart';
@@ -53,7 +54,7 @@ class _HomePageState extends State<HomePage> {
                             'Toma tu Orden',
                             style: TextStyle(
                               fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w700,
                               fontFamily: 'Poppins',
                             ),
                           ),
@@ -61,8 +62,9 @@ class _HomePageState extends State<HomePage> {
                           const Text(
                             'Selecciona una mesa disponible para hacer tu orden',
                             style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
+                              fontSize: 20,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w400,
                               fontFamily: 'Poppins',
                             ),
                           ),
@@ -71,11 +73,11 @@ class _HomePageState extends State<HomePage> {
                           // Leyenda de estados
                           Row(
                             children: [
-                              _buildLegend('Disponible', Colors.grey),
-                              const SizedBox(width: 16),
-                              _buildLegend('Ocupada', const Color(0xFFC83636)),
-                              const SizedBox(width: 16),
-                              _buildLegend('Atendida', Colors.green),
+                              _buildLegend('Disponible', 'assets/images/status1.svg'),
+                              const SizedBox(width: 35),
+                              _buildLegend('Ocupada', 'assets/images/status2.svg'),
+                              const SizedBox(width: 35),
+                              _buildLegend('Atendida', 'assets/images/status3.svg'),
                             ],
                           ),
                           const SizedBox(height: 20),
@@ -184,23 +186,22 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildLegend(String label, Color color) {
+  Widget _buildLegend(String label, String svgPath) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+        SvgPicture.asset(
+          svgPath,
+          width: 25,
+          height: 25,
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 6),
         Text(
           label,
           style: const TextStyle(
-            fontSize: 12,
+            fontSize: 16,
             fontFamily: 'Poppins',
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
