@@ -6,6 +6,7 @@ import '../bloc/login_bloc.dart';
 import '../../domain/entities/table_entity.dart';
 import '../widgets/table_card_widget.dart';
 import 'order_page.dart';
+import 'manage_order_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -252,11 +253,18 @@ class _HomePageState extends State<HomePage> {
           builder: (context) => OrderPage(table: table),
         ),
       );
+    } else if (table.isAttended) {
+      // Navegar a la pantalla de gestionar pedido
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ManageOrderPage(table: table),
+        ),
+      );
     } else {
-      // Mostrar mensaje de mesa no disponible
+      // Mostrar mensaje de mesa no disponible (ocupada)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('La mesa ${table.number} no está disponible'),
+          content: Text('La mesa ${table.number} está ocupada'),
           backgroundColor: Colors.orange,
         ),
       );
