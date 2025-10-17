@@ -5,6 +5,7 @@ import '../bloc/table_bloc.dart';
 import '../bloc/login_bloc.dart';
 import '../../domain/entities/table_entity.dart';
 import '../widgets/table_card_widget.dart';
+import 'order_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -100,21 +101,25 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                       
-                      // Grid de mesas en una Card con sombra
+                      // Grid de mesas en una Card con sombra mejorada
                       Container(
                         height: MediaQuery.of(context).size.height - 400,
-                        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                        margin: const EdgeInsets.symmetric(horizontal: 4.0),
                         child: Card(
-                          elevation: 8,
-                          shadowColor: Colors.black.withOpacity(0.2),
+                          elevation: 12,
+                          shadowColor: Colors.black.withOpacity(0.3),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Container(
-                            padding: const EdgeInsets.all(16.0),
+                            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 6.0, 16.0), // Menos padding a la derecha para la scrollbar
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.grey.withOpacity(0.1),
+                                width: 1,
+                              ),
                             ),
                             child: BlocBuilder<TableBloc, TableState>(
                               builder: (context, state) {
@@ -173,13 +178,18 @@ class _HomePageState extends State<HomePage> {
                                       data: Theme.of(context).copyWith(
                                         scrollbarTheme: ScrollbarThemeData(
                                           thumbColor: MaterialStateProperty.all(const Color(0xFFC83636)),
-                                          trackColor: MaterialStateProperty.all(Colors.grey.withOpacity(0.2)),
-                                          radius: const Radius.circular(4),
-                                          thickness: MaterialStateProperty.all(6),
+                                          trackColor: MaterialStateProperty.all(const Color(0xFFE8E8E8)),
+                                          trackVisibility: MaterialStateProperty.all(true),
+                                          trackBorderColor: MaterialStateProperty.all(const Color(0xFFD0D0D0)),
+                                          radius: const Radius.circular(12),
+                                          thickness: MaterialStateProperty.all(10),
+                                          crossAxisMargin: 1, // Más cerca del borde derecho
+                                          mainAxisMargin: 4,
                                         ),
                                       ),
                                       child: Scrollbar(
                                         thumbVisibility: true,
+                                        trackVisibility: true,
                                         child: GridView.builder(
                                           physics: const AlwaysScrollableScrollPhysics(),
                                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -255,14 +265,11 @@ class _HomePageState extends State<HomePage> {
   void _onTableTap(BuildContext context, TableEntity table) {
     if (table.isAvailable) {
       // Navegar a la pantalla de pedidos
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Mesa ${table.number} seleccionada'),
-          backgroundColor: Colors.green,
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => OrderPage(table: table),
         ),
       );
-      // TODO: Navegar a la pantalla de pedidos
-      // Navigator.pushNamed(context, '/order', arguments: table);
     } else {
       // Mostrar mensaje de mesa no disponible
       ScaffoldMessenger.of(context).showSnackBar(
