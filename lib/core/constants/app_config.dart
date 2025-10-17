@@ -12,7 +12,7 @@ class AppConfig {
   
   /// Cambia este valor para alternar entre entornos
   /// true = desarrollo local, false = producción
-  static const bool _isDevelopment = true;
+  static const bool _isDevelopment = false;
   
   /// URL base para desarrollo local según la opción seleccionada
   static String get _localBaseUrl {
@@ -29,9 +29,11 @@ class AppConfig {
   
   /// Endpoints de la API
   static const String loginEndpoint = '/api/auth/login';
+  static const String tablesEndpoint = '/api/tables';
   
-  /// URL completa para login
+  /// URLs completas
   static String get loginUrl => baseUrl + loginEndpoint;
+  static String get tablesUrl => baseUrl + tablesEndpoint;
   
   /// Información del entorno actual
   static String get environment => _isDevelopment ? 'Development' : 'Production';

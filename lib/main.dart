@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
+import 'package:tg_app_restaurante/core/wrappers/home_wrapper.dart';
 import 'data/datasources/login_datasource.dart';
 import 'data/repositories/login_repository_impl.dart';
 import 'domain/usecases/login_usecase.dart';
@@ -70,7 +71,7 @@ class AuthWrapper extends StatelessWidget {
         builder: (context, state) {
           // Si hay sesión activa, ir a dashboard
           if (state is AuthenticatedFromSession || state is LoginSuccess) {
-            return const DashboardPage();
+            return const HomePageWrapper();
           }
           
           // Para todos los demás casos (LoginInitial, LoginFailure, LoggedOut), mostrar login
