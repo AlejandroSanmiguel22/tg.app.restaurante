@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../bloc/table_bloc.dart';
+import '../bloc/login_bloc.dart';
 import '../../domain/entities/table_entity.dart';
 import '../widgets/table_card_widget.dart';
 
@@ -35,6 +36,21 @@ class _HomePageState extends State<HomePage> {
               'assets/images/banner.png', 
               width: MediaQuery.of(context).size.width,
               fit: BoxFit.fitWidth,
+            ),
+          ),
+          // Icono de logout en la esquina superior izquierda
+          Positioned(
+            top: 50,
+            left: 16,
+            child: Container(
+              child: IconButton(
+                icon: const Icon(
+                  Icons.logout, 
+                  color: Color.fromARGB(255, 255, 255, 255),
+                  size: 24,
+                ),
+                onPressed: () => _showLogoutDialog(context),
+              ),
             ),
           ),
           // Contenido principal con margen superior para el banner
@@ -84,95 +100,123 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                       
-                      // Grid de mesas
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height - 400, // Altura calculada
-                        child: BlocBuilder<TableBloc, TableState>(
-                          builder: (context, state) {
-                            if (state is TableLoading) {
-                              return const Center(
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFFC83636),
-                                ),
-                              );
-                            }
-                            
-                            if (state is TableError) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.error_outline,
-                                      size: 64,
-                                      color: Colors.red,
+                      // Grid de mesas en una Card con sombra
+                      Container(
+                        height: MediaQuery.of(context).size.height - 400,
+                        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Card(
+                          elevation: 8,
+                          shadowColor: Colors.black.withOpacity(0.2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.all(16.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: BlocBuilder<TableBloc, TableState>(
+                              builder: (context, state) {
+                                if (state is TableLoading) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFFC83636),
                                     ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      state.message,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.red,
-                                        fontFamily: 'Poppins',
+                                  );
+                                }
+                                
+                                if (state is TableError) {
+                                  return Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.error_outline,
+                                          size: 64,
+                                          color: Colors.red,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          state.message,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.red,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            context.read<TableBloc>().add(LoadTables());
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFC83636),
+                                          ),
+                                          child: const Text(
+                                            'Reintentar',
+                                            style: TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                
+                                if (state is TableLoaded) {
+                                  return RefreshIndicator(
+                                    onRefresh: () async {
+                                      context.read<TableBloc>().add(RefreshTables());
+                                    },
+                                    child: Theme(
+                                      data: Theme.of(context).copyWith(
+                                        scrollbarTheme: ScrollbarThemeData(
+                                          thumbColor: MaterialStateProperty.all(const Color(0xFFC83636)),
+                                          trackColor: MaterialStateProperty.all(Colors.grey.withOpacity(0.2)),
+                                          radius: const Radius.circular(4),
+                                          thickness: MaterialStateProperty.all(6),
+                                        ),
+                                      ),
+                                      child: Scrollbar(
+                                        thumbVisibility: true,
+                                        child: GridView.builder(
+                                          physics: const AlwaysScrollableScrollPhysics(),
+                                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 2,
+                                            crossAxisSpacing: 16,
+                                            mainAxisSpacing: 16,
+                                            childAspectRatio: 1.0,
+                                          ),
+                                          itemCount: state.tables.length,
+                                          itemBuilder: (context, index) {
+                                            final table = state.tables[index];
+                                            return TableCardWidget(
+                                              table: table,
+                                              onTap: () {
+                                                _onTableTap(context, table);
+                                              },
+                                            );
+                                          },
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(height: 16),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        context.read<TableBloc>().add(LoadTables());
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFFC83636),
-                                      ),
-                                      child: const Text(
-                                        'Reintentar',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
+                                  );
+                                }
+                                
+                                return const Center(
+                                  child: Text(
+                                    'No hay mesas disponibles',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey,
+                                      fontFamily: 'Poppins',
                                     ),
-                                  ],
-                                ),
-                              );
-                            }
-                            
-                            if (state is TableLoaded) {
-                              return RefreshIndicator(
-                                onRefresh: () async {
-                                  context.read<TableBloc>().add(RefreshTables());
-                                },
-                                child: GridView.builder(
-                                  physics: const AlwaysScrollableScrollPhysics(),
-                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: 16,
-                                    mainAxisSpacing: 16,
-                                    childAspectRatio: 1.0,
                                   ),
-                                  itemCount: state.tables.length,
-                                  itemBuilder: (context, index) {
-                                    final table = state.tables[index];
-                                    return TableCardWidget(
-                                      table: table,
-                                      onTap: () {
-                                        _onTableTap(context, table);
-                                      },
-                                    );
-                                  },
-                                ),
-                              );
-                            }
-                            
-                            return const Center(
-                              child: Text(
-                                'No hay mesas disponibles',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
-                            );
-                          },
+                                );
+                              },
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -228,5 +272,58 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Cerrar Sesión',
+            style: TextStyle(fontFamily: 'Poppins'),
+          ),
+          content: const Text(
+            '¿Estás seguro de que deseas cerrar sesión?',
+            style: TextStyle(fontFamily: 'Poppins'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(fontFamily: 'Poppins'),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC83636),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Mostrar mensaje de logout
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Has cerrado sesión correctamente'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                // Trigger logout
+                context.read<LoginBloc>().add(LogoutPressed());
+              },
+              child: const Text(
+                'Cerrar Sesión',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
