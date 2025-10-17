@@ -90,9 +90,9 @@ class _HomePageState extends State<HomePage> {
                           // Leyenda de estados
                           Row(
                             children: [
+                              const SizedBox(width: 65),
                               _buildLegend('Disponible', 'assets/images/status1.svg'),
                               const SizedBox(width: 35),
-                              _buildLegend('Ocupada', 'assets/images/status2.svg'),
                               const SizedBox(width: 35),
                               _buildLegend('Atendida', 'assets/images/status3.svg'),
                             ],

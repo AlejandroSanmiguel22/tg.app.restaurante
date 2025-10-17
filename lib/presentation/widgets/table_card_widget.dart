@@ -14,6 +14,9 @@ class TableCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Definir tamaño según el estado de la mesa
+    double tableSize = table.isAttended ? 190.0 : 120.0; // Mesa atendida más grande
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -27,8 +30,8 @@ class TableCardWidget extends StatelessWidget {
             // Imagen de la mesa según su estado
             SvgPicture.asset(
               _getTableImage(),
-              width: double.infinity,
-              height: double.infinity,
+              width: tableSize,
+              height: tableSize,
               fit: BoxFit.contain,
             ),
             
