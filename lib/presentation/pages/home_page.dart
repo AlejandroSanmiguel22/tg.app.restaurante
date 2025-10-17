@@ -103,16 +103,16 @@ class _HomePageState extends State<HomePage> {
                       
                       // Grid de mesas en una Card con sombra mejorada
                       Container(
-                        height: MediaQuery.of(context).size.height - 400,
-                        margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                        height: MediaQuery.of(context).size.height - 440, // Card más pequeña (era 400)
+                        margin: const EdgeInsets.symmetric(horizontal: 1.0),
                         child: Card(
-                          elevation: 12,
-                          shadowColor: Colors.black.withOpacity(0.3),
+                          elevation: 30, // Más sombra (era 12)
+                          shadowColor: Colors.black.withOpacity(0.4), // Sombra más intensa
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Container(
-                            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 6.0, 16.0), // Menos padding a la derecha para la scrollbar
+                            padding: const EdgeInsets.fromLTRB(16.0, 6.0, 16.0, 6.0), // Padding igual en todos los lados
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(20),
@@ -174,42 +174,24 @@ class _HomePageState extends State<HomePage> {
                                     onRefresh: () async {
                                       context.read<TableBloc>().add(RefreshTables());
                                     },
-                                    child: Theme(
-                                      data: Theme.of(context).copyWith(
-                                        scrollbarTheme: ScrollbarThemeData(
-                                          thumbColor: MaterialStateProperty.all(const Color(0xFFC83636)),
-                                          trackColor: MaterialStateProperty.all(const Color(0xFFE8E8E8)),
-                                          trackVisibility: MaterialStateProperty.all(true),
-                                          trackBorderColor: MaterialStateProperty.all(const Color(0xFFD0D0D0)),
-                                          radius: const Radius.circular(12),
-                                          thickness: MaterialStateProperty.all(10),
-                                          crossAxisMargin: 1, // Más cerca del borde derecho
-                                          mainAxisMargin: 4,
-                                        ),
+                                    child: GridView.builder(
+                                      physics: const AlwaysScrollableScrollPhysics(),
+                                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        crossAxisSpacing: 16,
+                                        mainAxisSpacing: 16,
+                                        childAspectRatio: 1.0,
                                       ),
-                                      child: Scrollbar(
-                                        thumbVisibility: true,
-                                        trackVisibility: true,
-                                        child: GridView.builder(
-                                          physics: const AlwaysScrollableScrollPhysics(),
-                                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                            crossAxisCount: 2,
-                                            crossAxisSpacing: 16,
-                                            mainAxisSpacing: 16,
-                                            childAspectRatio: 1.0,
-                                          ),
-                                          itemCount: state.tables.length,
-                                          itemBuilder: (context, index) {
-                                            final table = state.tables[index];
-                                            return TableCardWidget(
-                                              table: table,
-                                              onTap: () {
-                                                _onTableTap(context, table);
-                                              },
-                                            );
+                                      itemCount: state.tables.length,
+                                      itemBuilder: (context, index) {
+                                        final table = state.tables[index];
+                                        return TableCardWidget(
+                                          table: table,
+                                          onTap: () {
+                                            _onTableTap(context, table);
                                           },
-                                        ),
-                                      ),
+                                        );
+                                      },
                                     ),
                                   );
                                 }
