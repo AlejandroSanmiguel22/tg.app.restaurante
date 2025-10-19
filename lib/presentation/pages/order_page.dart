@@ -249,6 +249,7 @@ class _OrderPageState extends State<OrderPage> {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: false, // Evita que el scaffold se redimensione con el teclado
         body: Stack(
           children: [
           // Banner superior
@@ -281,41 +282,40 @@ class _OrderPageState extends State<OrderPage> {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(top: 190), // Espacio para el banner
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0), // Reducido de 16.0 a 8.0
-                  child: Column(
-                    children: [
-                      // Título y subtítulo
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Realiza tu Pedido',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Poppins',
-                            ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  children: [
+                    // Título y subtítulo
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Realiza tu Pedido',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Poppins',
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Selecciona los productos que deseas agregar a tu pedido',
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Poppins',
-                            ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Selecciona los productos que deseas agregar a tu pedido',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'Poppins',
                           ),
-                          const SizedBox(height: 16),
-                        ],
-                      ),
-                      
-                      // Área de contenido principal en Card
-                      Container(
-                        height: MediaQuery.of(context).size.height - 380,
-                        margin: const EdgeInsets.only(left: 0.0, right: 4.0), // Margen izquierdo en 0
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                    
+                    // Card principal - sin scroll, altura fija
+                    Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 0.0, right: 4.0),
                         child: Card(
                           elevation: 20,
                           shadowColor: Colors.black.withOpacity(0.4),
@@ -334,7 +334,7 @@ class _OrderPageState extends State<OrderPage> {
                             ),
                             child: Column(
                               children: [
-                                // Barra de búsqueda y filtro
+                                // Barra de búsqueda y filtro (fija)
                                 Column(
                                   children: [
                                     Row(
@@ -431,27 +431,34 @@ class _OrderPageState extends State<OrderPage> {
                                 
                                 const SizedBox(height: 16),
                                 
-                                // Lista de productos seleccionados y carrito
+                                // Lista de productos con scroll (solo esta parte) - ocupa el espacio restante
                                 Expanded(
-                                  child: Column(
-                                    children: [
-                                      // Lista de productos seleccionados
-                                      Expanded(
-                                        child: _buildSelectedProductsList(),
-                                      ),
-                                      
-                                      // Resumen al final (solo si hay productos)
-                                      if (_cartItems.isNotEmpty) _buildOrderSummary(),
-                                    ],
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    child: _buildSelectedProductsList(),
                                   ),
+                                ),
+                                
+                                // Área fija del resumen y botón (no afectada por el teclado)
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Card del resumen (fija)
+                                    _buildOrderSummaryCard(),
+                                    
+                                    const SizedBox(height: 12),
+                                    
+                                    // Botón de enviar separado (fijo)
+                                    _buildSendButton(),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -655,9 +662,63 @@ class _OrderPageState extends State<OrderPage> {
     );
   }
 
-  Widget _buildOrderSummary() {
+  Widget _buildOrderSummaryCard() {
+    // Si no hay productos, mostrar un resumen vacío
+    if (_cartItems.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            Text(
+              'SubTotal:',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Poppins',
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '\$ 0',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Poppins',
+                color: Colors.grey[600],
+              ),
+            ),
+            const Spacer(),
+            Text(
+              'Total:',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Poppins',
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '\$ 0',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -670,97 +731,93 @@ class _OrderPageState extends State<OrderPage> {
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          // Totales en una sola fila horizontal
-          Row(
-            children: [
-              Text(
-                'SubTotal:',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Poppins',
-                  color: Colors.grey[700],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '\$ ${_formatPrice(_subtotal)}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins',
-                  color: Colors.black,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'Total:',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins',
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '\$ ${_formatPrice(_total)}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Poppins',
-                  color: Colors.black,
-                ),
-              ),
-            ],
+          Text(
+            'SubTotal:',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Poppins',
+              color: Colors.grey[700],
+            ),
           ),
-          const SizedBox(height: 16),
-          // Botón Enviar
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isCreatingOrder ? null : _createOrder,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC83636),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: _isCreatingOrder 
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Enviar',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.send,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ],
-                    ),
+          const SizedBox(width: 8),
+          Text(
+            '\$ ${_formatPrice(_subtotal)}',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Poppins',
+              color: Colors.black,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            'Total:',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Poppins',
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '\$ ${_formatPrice(_total)}',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Poppins',
+              color: Colors.black,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSendButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _cartItems.isEmpty || _isCreatingOrder ? null : _createOrder,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _cartItems.isEmpty ? Colors.grey[300] : const Color(0xFFC83636),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        child: _isCreatingOrder 
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Enviar',
+                    style: TextStyle(
+                      color: _cartItems.isEmpty ? Colors.grey[600] : Colors.white,
+                      fontSize: 16,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.send,
+                    color: _cartItems.isEmpty ? Colors.grey[600] : Colors.white,
+                    size: 18,
+                  ),
+                ],
+              ),
       ),
     );
   }
