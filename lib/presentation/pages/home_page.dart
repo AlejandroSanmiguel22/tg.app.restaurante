@@ -245,14 +245,19 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _onTableTap(BuildContext context, TableEntity table) {
+  void _onTableTap(BuildContext context, TableEntity table) async {
     if (table.isAvailable) {
-      // Navegar a la pantalla de pedidos
-      Navigator.of(context).push(
+      // Navegar a la pantalla de pedidos y capturar el resultado
+      final result = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (context) => OrderPage(table: table),
         ),
       );
+      
+      // Si se creó una orden exitosamente, recargar las mesas
+      if (result == true) {
+        context.read<TableBloc>().add(RefreshTables());
+      }
     } else if (table.isAttended) {
       // Navegar a la pantalla de gestionar pedido
       Navigator.of(context).push(

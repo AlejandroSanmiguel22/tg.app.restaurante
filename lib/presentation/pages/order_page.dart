@@ -879,7 +879,8 @@ class _OrderPageState extends State<OrderPage> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop();
+        // Retornar true para indicar que se creó una orden exitosamente
+        Navigator.of(context).pop(true);
       } else {
         throw Exception('No se pudo crear el pedido');
       }
