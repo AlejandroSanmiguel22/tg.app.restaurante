@@ -561,93 +561,103 @@ class _OrderPageState extends State<OrderPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.product.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Poppins',
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item.product.description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                        fontFamily: 'Poppins',
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.product.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Poppins',
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                        // Botón de eliminar más pequeño en la esquina
+                        GestureDetector(
+                          onTap: () => _removeFromCart(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            child: SvgPicture.asset(
+                              'assets/icons/trash.svg',
+                              width: 16,
+                              height: 16,
+                              color: Colors.red[600],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '\$ ${_formatPrice(item.product.price)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFC83636),
+                      item.product.description,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
                         fontFamily: 'Poppins',
                       ),
+                      maxLines: 2, // Permitir 2 líneas para mejor legibilidad
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Text(
+                          '\$ ${_formatPrice(item.product.price)}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFFC83636),
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        const Spacer(),
+                        // Controles de cantidad más compactos
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            GestureDetector(
+                              onTap: () => _updateQuantity(index, item.quantity - 1),
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Icon(Icons.remove, size: 14),
+                              ),
+                            ),
+                            Container(
+                              width: 30,
+                              alignment: Alignment.center,
+                              child: Text(
+                                '${item.quantity}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => _updateQuantity(index, item.quantity + 1),
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFC83636),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Icon(Icons.add, size: 14, color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
-                ),
-              ),
-              // Contador de cantidad
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () => _updateQuantity(index, item.quantity - 1),
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(Icons.remove, size: 18),
-                    ),
-                  ),
-                  Container(
-                    width: 40,
-                    alignment: Alignment.center,
-                    child: Text(
-                      '${item.quantity}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => _updateQuantity(index, item.quantity + 1),
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFC83636),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(Icons.add, size: 18, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 8),
-              // Botón de eliminar - icono de basura sin fondo
-              GestureDetector(
-                onTap: () => _removeFromCart(index),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  child: SvgPicture.asset(
-                    'assets/icons/trash.svg',
-                    width: 20,
-                    height: 20,
-                    color: Colors.red[600],
-                  ),
                 ),
               ),
             ],
@@ -663,9 +673,17 @@ class _OrderPageState extends State<OrderPage> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.withOpacity(0.2)),
+          //agregar sombra ligera
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.4),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+         // border: Border.all(color: Colors.grey.withOpacity(0.2)),
         ),
         child: Row(
           children: [
@@ -773,46 +791,51 @@ class _OrderPageState extends State<OrderPage> {
   }
 
   Widget _buildSendButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _cartItems.isEmpty || _isCreatingOrder ? null : _createOrder,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _cartItems.isEmpty ? Colors.grey[300] : const Color(0xFFC83636),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+    return Center(
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.6, // 60% del ancho de la pantalla
+        child: ElevatedButton(
+          onPressed: _cartItems.isEmpty || _isCreatingOrder ? null : _createOrder,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _cartItems.isEmpty ? Colors.grey[300] : const Color(0xFFC83636),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20), // Radio más grande
+            ),
+            elevation: 2,
           ),
-        ),
-        child: _isCreatingOrder 
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Enviar',
-                    style: TextStyle(
-                      color: _cartItems.isEmpty ? Colors.grey[600] : Colors.white,
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
+          child: _isCreatingOrder 
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Enviar',
+                      style: TextStyle(
+                        color: _cartItems.isEmpty ? Colors.grey[600] : Colors.white,
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.send,
-                    color: _cartItems.isEmpty ? Colors.grey[600] : Colors.white,
-                    size: 18,
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 6),
+                    SvgPicture.asset(
+                      'assets/icons/send.svg',
+                      width: 16,
+                      height: 16,
+                      color: _cartItems.isEmpty ? Colors.grey[600] : Colors.white,
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }
