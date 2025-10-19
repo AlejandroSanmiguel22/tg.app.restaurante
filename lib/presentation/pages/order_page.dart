@@ -483,12 +483,6 @@ class _OrderPageState extends State<OrderPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search_off,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
             Text(
               _products.isEmpty ? 'No hay productos disponibles' : 'Busca productos para agregar al pedido',
               style: TextStyle(
@@ -678,9 +672,9 @@ class _OrderPageState extends State<OrderPage> {
               'SubTotal:',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w800,
                 fontFamily: 'Poppins',
-                color: Colors.grey[600],
+                color: Colors.black,
               ),
             ),
             const SizedBox(width: 8),
@@ -688,9 +682,9 @@ class _OrderPageState extends State<OrderPage> {
               '\$ 0',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 fontFamily: 'Poppins',
-                color: Colors.grey[600],
+                color: Colors.black,
               ),
             ),
             const Spacer(),
@@ -698,9 +692,9 @@ class _OrderPageState extends State<OrderPage> {
               'Total:',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w800,
                 fontFamily: 'Poppins',
-                color: Colors.grey[600],
+                color: Colors.black,
               ),
             ),
             const SizedBox(width: 8),
@@ -708,9 +702,9 @@ class _OrderPageState extends State<OrderPage> {
               '\$ 0',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w500,
                 fontFamily: 'Poppins',
-                color: Colors.grey[600],
+                color: Colors.black,
               ),
             ),
           ],
@@ -737,9 +731,9 @@ class _OrderPageState extends State<OrderPage> {
             'SubTotal:',
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w800,
               fontFamily: 'Poppins',
-              color: Colors.grey[700],
+              color: Colors.black,
             ),
           ),
           const SizedBox(width: 8),
@@ -747,7 +741,7 @@ class _OrderPageState extends State<OrderPage> {
             '\$ ${_formatPrice(_subtotal)}',
             style: const TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w500,
               fontFamily: 'Poppins',
               color: Colors.black,
             ),
@@ -757,7 +751,7 @@ class _OrderPageState extends State<OrderPage> {
             'Total:',
             style: const TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w800,
               fontFamily: 'Poppins',
               color: Colors.black,
             ),
@@ -767,7 +761,7 @@ class _OrderPageState extends State<OrderPage> {
             '\$ ${_formatPrice(_total)}',
             style: const TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w500,
               fontFamily: 'Poppins',
               color: Colors.black,
             ),
