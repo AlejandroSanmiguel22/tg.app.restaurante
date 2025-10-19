@@ -7,6 +7,7 @@ import '../../domain/entities/order_item_entity.dart';
 import '../../core/services/product_service.dart';
 import '../../core/services/order_service.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/snackbar_service.dart';
 
 class OrderPage extends StatefulWidget {
   final TableEntity table;
@@ -842,11 +843,10 @@ class _OrderPageState extends State<OrderPage> {
 
   void _createOrder() async {
     if (_cartItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Agrega productos al pedido'),
-          backgroundColor: Colors.orange,
-        ),
+      SnackBarService.showInfo(
+        context: context,
+        title: 'Carrito vacío',
+        message: 'Agrega productos al pedido',
       );
       return;
     }
@@ -873,11 +873,10 @@ class _OrderPageState extends State<OrderPage> {
       );
 
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Pedido creado exitosamente para mesa ${widget.table.number}'),
-            backgroundColor: Colors.green,
-          ),
+        SnackBarService.showSuccess(
+          context: context,
+          title: '¡Pedido creado!',
+          message: 'Pedido creado exitosamente para mesa ${widget.table.number}',
         );
         // Retornar true para indicar que se creó una orden exitosamente
         Navigator.of(context).pop(true);
@@ -885,11 +884,10 @@ class _OrderPageState extends State<OrderPage> {
         throw Exception('No se pudo crear el pedido');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al crear pedido: $e'),
-          backgroundColor: Colors.red,
-        ),
+      SnackBarService.showError(
+        context: context,
+        title: 'Error al crear pedido',
+        message: e.toString(),
       );
     } finally {
       setState(() {
