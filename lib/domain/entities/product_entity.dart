@@ -24,8 +24,8 @@ class Product {
       description: json['description'] ?? '',
       price: (json['price'] ?? 0).toDouble(),
       imageUrl: json['imageUrl'],
-      category: json['category'] ?? '',
-      available: json['available'] ?? true,
+      category: json['categoryId'] ?? json['category'] ?? '',
+      available: json['isActive'] ?? json['available'] ?? true,
     );
   }
 
