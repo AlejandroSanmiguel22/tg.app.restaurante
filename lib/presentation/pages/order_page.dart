@@ -520,7 +520,7 @@ class _OrderPageState extends State<OrderPage> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Colors.grey[100],
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.grey.withOpacity(0.2)),
           ),
@@ -637,15 +637,16 @@ class _OrderPageState extends State<OrderPage> {
                 ],
               ),
               const SizedBox(width: 8),
-              // Botón de eliminar - icono de basura rojo
+              // Botón de eliminar - icono de basura sin fondo
               GestureDetector(
                 onTap: () => _removeFromCart(index),
                 child: Container(
                   padding: const EdgeInsets.all(8),
-                  child: Icon(
-                    Icons.delete_outline,
+                  child: SvgPicture.asset(
+                    'assets/icons/trash.svg',
+                    width: 20,
+                    height: 20,
                     color: Colors.red[600],
-                    size: 24,
                   ),
                 ),
               ),
