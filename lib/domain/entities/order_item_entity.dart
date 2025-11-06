@@ -27,6 +27,26 @@ class OrderItem {
     );
   }
 
+  factory OrderItem.fromOrderJson(Map<String, dynamic> json) {
+    // Crear un producto básico con la información disponible
+    final product = Product(
+      id: json['productId'] ?? '',
+      name: json['productName'] ?? '',
+      description: '',
+      price: (json['unitPrice'] ?? 0).toDouble(),
+      imageUrl: null,
+      category: '',
+    );
+
+    return OrderItem(
+      productId: json['productId'] ?? '',
+      product: product,
+      quantity: json['quantity'] ?? 0,
+      notes: json['notes'],
+      unitPrice: (json['unitPrice'] ?? 0).toDouble(),
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'productId': productId,

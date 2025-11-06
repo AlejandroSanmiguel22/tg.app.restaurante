@@ -801,7 +801,7 @@ class _OrderPageState extends State<OrderPage> {
             backgroundColor: _cartItems.isEmpty ? Colors.grey[300] : const Color(0xFFC83636),
             padding: const EdgeInsets.symmetric(vertical: 10),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20), // Radio más grande
+              borderRadius: BorderRadius.circular(15), // Radio más grande
             ),
             elevation: 2,
           ),
