@@ -548,46 +548,55 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
         // Botón Factura
         Expanded(
           child: ElevatedButton(
-            onPressed: _currentOrder == null ? null : _generateInvoice,
+            onPressed: (_currentOrder == null || _isUpdating) ? null : _generateInvoice,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _currentOrder == null ? Colors.grey[300] : const Color(0xFFC83636),
+              backgroundColor: (_currentOrder == null || _isUpdating) ? Colors.grey[300] : const Color(0xFFC83636),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
               elevation: 2,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Factura',
-                  style: TextStyle(
-                    color: _currentOrder == null ? Colors.grey[600] : Colors.white,
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w600,
+            child: _isUpdating 
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Factura',
+                        style: TextStyle(
+                          color: (_currentOrder == null || _isUpdating) ? Colors.grey[600] : Colors.white,
+                          fontSize: 14,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      SvgPicture.asset(
+                        'assets/icons/factura.svg',
+                        width: 16,
+                        height: 16,
+                        color: (_currentOrder == null || _isUpdating) ? Colors.grey[600] : Colors.white,
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 6),
-                SvgPicture.asset(
-                  'assets/icons/factura.svg',
-                  width: 16,
-                  height: 16,
-                  color: _currentOrder == null ? Colors.grey[600] : Colors.white,
-                ),
-              ],
-            ),
           ),
         ),
         const SizedBox(width: 12),
         // Botón Cerrar
         Expanded(
           child: ElevatedButton(
-            onPressed: _currentOrder == null ? null : _closeOrder,
+            onPressed: (_currentOrder == null || _isUpdating) ? null : _closeOrder,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _currentOrder == null ? Colors.grey[300] : const Color(0xFFC83636),
+              backgroundColor: (_currentOrder == null || _isUpdating) ? Colors.grey[300] : const Color(0xFFC83636),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -601,7 +610,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
                 Text(
                   'Cerrar',
                   style: TextStyle(
-                    color: _currentOrder == null ? Colors.grey[600] : Colors.white,
+                    color: (_currentOrder == null || _isUpdating) ? Colors.grey[600] : Colors.white,
                     fontSize: 14,
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w600,
@@ -612,7 +621,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
                   'assets/icons/send.svg',
                   width: 16,
                   height: 16,
-                  color: _currentOrder == null ? Colors.grey[600] : Colors.white,
+                  color: (_currentOrder == null || _isUpdating) ? Colors.grey[600] : Colors.white,
                 ),
               ],
             ),
@@ -622,13 +631,36 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
     );
   }
 
-  void _generateInvoice() {
-    // TODO: Implementar generación de factura
-    SnackBarService.showInfo(
-      context: context,
-      title: 'Factura',
-      message: 'Función de factura en desarrollo',
-    );
+  void _generateInvoice() async {
+    if (_currentOrder == null) return;
+    
+    setState(() {
+      _isUpdating = true;
+    });
+
+    try {
+      final success = await _orderService.generateBill(_currentOrder!.id);
+      
+      if (success) {
+        SnackBarService.showSuccess(
+          context: context,
+          title: '¡Factura generada!',
+          message: 'Factura generada exitosamente para la mesa ${widget.table.number}',
+        );
+      } else {
+        throw Exception('No se pudo generar la factura');
+      }
+    } catch (e) {
+      SnackBarService.showError(
+        context: context,
+        title: 'Error al generar factura',
+        message: e.toString(),
+      );
+    } finally {
+      setState(() {
+        _isUpdating = false;
+      });
+    }
   }
 
   void _closeOrder() {
@@ -640,9 +672,23 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
             'Cerrar Pedido',
             style: TextStyle(fontFamily: 'Poppins'),
           ),
-          content: Text(
-            '¿Estás seguro de que deseas cerrar el pedido de la mesa ${widget.table.number}?',
-            style: const TextStyle(fontFamily: 'Poppins'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '¿Estás seguro de que deseas cerrar el pedido de la mesa ${widget.table.number}?',
+                style: const TextStyle(fontFamily: 'Poppins'),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '¿Incluir propina?',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -654,20 +700,30 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[600],
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performCloseOrder(false); // Sin propina
+              },
+              child: const Text(
+                'Sin Propina',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFC83636),
               ),
               onPressed: () {
                 Navigator.of(context).pop();
-                // TODO: Implementar lógica para cerrar pedido
-                SnackBarService.showSuccess(
-                  context: context,
-                  title: 'Pedido cerrado',
-                  message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente',
-                );
-                Navigator.of(context).pop(); // Volver a la pantalla anterior
+                _performCloseOrder(true); // Con propina
               },
               child: const Text(
-                'Cerrar',
+                'Con Propina',
                 style: TextStyle(
                   color: Colors.white,
                   fontFamily: 'Poppins',
@@ -678,5 +734,38 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
         );
       },
     );
+  }
+
+  void _performCloseOrder(bool withTip) async {
+    if (_currentOrder == null) return;
+    
+    setState(() {
+      _isUpdating = true;
+    });
+
+    try {
+      final success = await _orderService.closeOrder(_currentOrder!.id, withTip);
+      
+      if (success) {
+        SnackBarService.showSuccess(
+          context: context,
+          title: '¡Pedido cerrado!',
+          message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}',
+        );
+        Navigator.of(context).pop(); // Volver a la pantalla anterior
+      } else {
+        throw Exception('No se pudo cerrar el pedido');
+      }
+    } catch (e) {
+      SnackBarService.showError(
+        context: context,
+        title: 'Error al cerrar pedido',
+        message: e.toString(),
+      );
+    } finally {
+      setState(() {
+        _isUpdating = false;
+      });
+    }
   }
 }

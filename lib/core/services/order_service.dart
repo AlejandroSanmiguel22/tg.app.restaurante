@@ -100,4 +100,80 @@ class OrderService {
       throw Exception('Error inesperado: $e');
     }
   }
+
+  /// Generar factura para una orden
+  Future<bool> generateBill(String orderId) async {
+    try {
+      final token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No hay token de autenticación');
+      }
+      
+      print('🔵 Generando factura para orden: $orderId');
+      
+      final response = await _dio.post(
+        '${AppConfig.baseUrl}/api/orders/$orderId/bill',
+        data: {
+          'withTip': 'yes',
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+      
+      print('🔵 Respuesta generar factura: ${response.statusCode}');
+      
+      return response.statusCode == 200 || response.statusCode == 201;
+    } on DioException catch (e) {
+      print('🔴 Error Dio al generar factura: ${e.response?.data}');
+      if (e.response?.statusCode == 401) {
+        throw Exception('Token de autenticación inválido');
+      }
+      throw Exception('Error de conexión: ${e.message}');
+    } catch (e) {
+      print('🔴 Error inesperado al generar factura: $e');
+      throw Exception('Error inesperado: $e');
+    }
+  }
+
+  /// Cerrar una orden
+  Future<bool> closeOrder(String orderId, bool withTip) async {
+    try {
+      final token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No hay token de autenticación');
+      }
+      
+      print('🔵 Cerrando orden: $orderId con tip: $withTip');
+      
+      final response = await _dio.post(
+        '${AppConfig.baseUrl}/api/orders/$orderId/close',
+        data: {
+          'withTip': withTip ? 'yes' : 'no',
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+      
+      print('🔵 Respuesta cerrar orden: ${response.statusCode}');
+      
+      return response.statusCode == 200 || response.statusCode == 201;
+    } on DioException catch (e) {
+      print('🔴 Error Dio al cerrar orden: ${e.response?.data}');
+      if (e.response?.statusCode == 401) {
+        throw Exception('Token de autenticación inválido');
+      }
+      throw Exception('Error de conexión: ${e.message}');
+    } catch (e) {
+      print('🔴 Error inesperado al cerrar orden: $e');
+      throw Exception('Error inesperado: $e');
+    }
+  }
 }
