@@ -7,6 +7,7 @@ import '../../domain/entities/table_entity.dart';
 import '../widgets/table_card_widget.dart';
 import 'order_page.dart';
 import 'manage_order_page.dart';
+import 'printers_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -220,6 +221,21 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const PrintersPage(),
+            ),
+          );
+        },
+        backgroundColor: const Color(0xFFC83636),
+        child: const Icon(
+          Icons.print,
+          color: Colors.white,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 

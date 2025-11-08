@@ -8,6 +8,7 @@ import '../../core/services/product_service.dart';
 import '../../core/services/order_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/snackbar_service.dart';
+import '../../core/services/print_service.dart';
 
 class OrderPage extends StatefulWidget {
   final TableEntity table;
@@ -859,6 +860,7 @@ class _OrderPageState extends State<OrderPage> {
       // Obtener datos del usuario para waiterId
       final userData = await AuthService.getUserData();
       final waiterId = userData['userId'];
+      final waiterName = userData['userName'] ?? 'Mesero desconocido';
       
       if (waiterId == null) {
         throw Exception('No se pudo obtener el ID del mesero');
@@ -873,6 +875,9 @@ class _OrderPageState extends State<OrderPage> {
       );
 
       if (success) {
+        // Intentar imprimir la factura
+        await _printOrderReceipt(waiterName);
+
         SnackBarService.showSuccess(
           context: context,
           title: '¡Pedido creado!',
@@ -893,6 +898,60 @@ class _OrderPageState extends State<OrderPage> {
       setState(() {
         _isCreatingOrder = false;
       });
+    }
+  }
+
+  Future<void> _printOrderReceipt(String waiterName) async {
+    try {
+      final printService = PrintService();
+      
+      // Verificar si hay impresora conectada
+      if (!printService.isConnected) {
+        // Intentar auto-conectar
+        final autoConnected = await printService.autoConnect();
+        if (!autoConnected) {
+          SnackBarService.showInfo(
+            context: context,
+            title: 'Sin impresora',
+            message: 'No hay impresora conectada. Ve a configuración de impresoras.',
+          );
+          return;
+        }
+      }
+
+      // Generar ID de orden único basado en timestamp
+      final orderId = DateTime.now().millisecondsSinceEpoch.toString();
+      final orderTime = DateTime.now();
+
+      // Imprimir la factura
+      final printSuccess = await printService.printOrderReceipt(
+        orderItems: _cartItems,
+        table: widget.table,
+        waiterName: waiterName,
+        orderId: orderId,
+        orderTime: orderTime,
+      );
+
+      if (printSuccess) {
+        SnackBarService.showSuccess(
+          context: context,
+          title: 'Factura impresa',
+          message: 'Orden enviada a cocina',
+        );
+      } else {
+        SnackBarService.showInfo(
+          context: context,
+          title: 'Error de impresión',
+          message: 'La orden se guardó pero no se pudo imprimir',
+        );
+      }
+    } catch (e) {
+      print('🔴 Error al imprimir: $e');
+      SnackBarService.showInfo(
+        context: context,
+        title: 'Error de impresión',
+        message: 'La orden se guardó pero no se pudo imprimir: $e',
+      );
     }
   }
 }

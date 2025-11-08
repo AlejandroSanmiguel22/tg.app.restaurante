@@ -14,10 +14,25 @@ import 'presentation/bloc/login_bloc.dart';
 import 'presentation/pages/login_page.dart';
 import 'presentation/pages/dashboard_page.dart';
 import 'core/theme/app_theme.dart';
+import 'core/services/print_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializar servicio de impresión
+  _initializePrintService();
+  
   runApp(const MyApp());
+}
+
+Future<void> _initializePrintService() async {
+  try {
+    final printService = PrintService();
+    await printService.autoConnect();
+    print('🔵 Servicio de impresión inicializado');
+  } catch (e) {
+    print('🔴 Error inicializando servicio de impresión: $e');
+  }
 }
 
 class MyApp extends StatelessWidget {
