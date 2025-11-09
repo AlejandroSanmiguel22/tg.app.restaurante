@@ -399,28 +399,31 @@ class PrintService {
       final productName = item['productName']?.toString() ?? '';
       final unitPrice = (item['unitPrice'] as num?)?.toDouble() ?? 0.0;
       
-      bytes.addAll(utf8.encode('$quantity    $productName'));
+      bytes.addAll(utf8.encode('$quantity    $productName. ${_formatPrice(unitPrice)}'));
       bytes.addAll([LF]);
-      bytes.addAll(utf8.encode('                        ${_formatPrice(unitPrice)}'));
+      //bytes.addAll(utf8.encode('                        ${_formatPrice(unitPrice)}'));
       bytes.addAll([LF]);
     }
 
     bytes.addAll([LF]);
-    bytes.addAll(utf8.encode('----------------------------------------'));
+    bytes.addAll(utf8.encode('--------------------------------'));
     bytes.addAll([LF]);
 
     // SubTotal
-    bytes.addAll(utf8.encode('                        SubTotal    ${_formatPrice(subtotal)}'));
+    bytes.addAll(utf8.encode('SubTotal             ${_formatPrice(subtotal)}'));
     bytes.addAll([LF]);
 
     // Propina
-    bytes.addAll(utf8.encode('                Propina Voluntaria    ${_formatPrice(tip)}'));
+    bytes.addAll(utf8.encode('Propina Voluntaria   ${_formatPrice(tip)}'));
     bytes.addAll([LF, LF]);
 
     // Total (en negrita y más grande)
     bytes.addAll([ESC, 0x45, 0x01]); // ESC E - Bold on
     bytes.addAll([ESC, 0x21, 0x10]); // ESC ! - Double height
-    bytes.addAll(utf8.encode('                        TOTAL    ${_formatPrice(total)}'));
+    bytes.addAll(utf8.encode('--------------------------------'));
+    bytes.addAll([ESC, 0x45, 0x01]); // ESC E - Bold on
+    bytes.addAll([ESC, 0x21, 0x10]); // ESC ! - Double height
+    bytes.addAll(utf8.encode('TOTAL                ${_formatPrice(total)}'));
     bytes.addAll([ESC, 0x21, 0x00]); // ESC ! - Normal size
     bytes.addAll([ESC, 0x45, 0x00]); // ESC E - Bold off
     bytes.addAll([LF, LF]);
