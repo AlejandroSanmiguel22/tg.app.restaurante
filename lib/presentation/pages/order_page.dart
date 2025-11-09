@@ -903,21 +903,27 @@ class _OrderPageState extends State<OrderPage> {
 
   Future<void> _printOrderReceipt(String waiterName) async {
     try {
-      final printService = PrintService();
+      final printService = PrintService(); // Esto es un singleton, mantendrá el estado
       
-      // Verificar si hay impresora conectada
-      if (printService.isConnected != true) {
+      print('🔵 Intentando imprimir orden. Estado de impresora cocina: ${printService.isConnected(PrinterType.kitchen)}');
+      
+      // Verificar si hay impresora de cocina conectada
+      if (!printService.isConnected(PrinterType.kitchen)) {
+        print('🔴 No hay impresora de cocina conectada, intentando auto-conectar...');
         // Intentar auto-conectar
-        final autoConnected = await printService.autoConnect();
-        if (!autoConnected) {
+        await printService.autoConnect();
+        if (!printService.isConnected(PrinterType.kitchen)) {
+          print('🔴 No se pudo auto-conectar a impresora de cocina');
           SnackBarService.showInfo(
             context: context,
-            title: 'Sin impresora',
-            message: 'No hay impresora conectada. Ve a configuración de impresoras.',
+            title: 'Sin impresora de cocina',
+            message: 'No hay impresora de cocina conectada. Ve a configuración de impresoras.',
           );
           return;
         }
       }
+
+      print('🔵 Impresora de cocina conectada, procediendo a imprimir...');
 
       // Generar ID de orden único basado en timestamp
       final orderId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -933,12 +939,14 @@ class _OrderPageState extends State<OrderPage> {
       );
 
       if (printSuccess) {
+        print('✅ Impresión exitosa');
         SnackBarService.showSuccess(
           context: context,
           title: 'Factura impresa',
           message: 'Orden enviada a cocina',
         );
       } else {
+        print('🔴 Error en impresión');
         SnackBarService.showInfo(
           context: context,
           title: 'Error de impresión',

@@ -41,20 +41,39 @@ class PrintService {
       final prefs = await SharedPreferences.getInstance();
       bool anyConnected = false;
       
+      print('🔵 Iniciando auto-conexión...');
+      
       // Intentar reconectar impresora de cocina
       final kitchenAddress = prefs.getString(_kitchenPrinterKey);
       if (kitchenAddress != null) {
+        print('🔵 Intentando reconectar impresora de cocina: $kitchenAddress');
         final success = await _reconnectPrinter(kitchenAddress, PrinterType.kitchen);
-        if (success) anyConnected = true;
+        if (success) {
+          anyConnected = true;
+          print('✅ Impresora de cocina reconectada exitosamente');
+        } else {
+          print('🔴 No se pudo reconectar impresora de cocina');
+        }
+      } else {
+        print('🔵 No hay dirección guardada para impresora de cocina');
       }
       
       // Intentar reconectar impresora de facturas
       final billAddress = prefs.getString(_billPrinterKey);
       if (billAddress != null) {
+        print('🔵 Intentando reconectar impresora de facturas: $billAddress');
         final success = await _reconnectPrinter(billAddress, PrinterType.bill);
-        if (success) anyConnected = true;
+        if (success) {
+          anyConnected = true;
+          print('✅ Impresora de facturas reconectada exitosamente');
+        } else {
+          print('🔴 No se pudo reconectar impresora de facturas');
+        }
+      } else {
+        print('🔵 No hay dirección guardada para impresora de facturas');
       }
 
+      print('🔵 Auto-conexión completada. Alguna conectada: $anyConnected');
       return anyConnected;
     } catch (e) {
       print('🔴 Error en auto-conectar: $e');
@@ -64,11 +83,16 @@ class PrintService {
 
   Future<bool> _reconnectPrinter(String deviceAddress, PrinterType type) async {
     try {
+      print('🔵 Buscando dispositivo ${type.name} con dirección: $deviceAddress');
       final bondedDevices = await FlutterBluetoothSerial.instance.getBondedDevices();
       final device = bondedDevices.where((d) => d.address == deviceAddress).firstOrNull;
       
-      if (device == null) return false;
+      if (device == null) {
+        print('🔴 No se encontró dispositivo con dirección $deviceAddress');
+        return false;
+      }
 
+      print('🔵 Dispositivo ${type.name} encontrado: ${device.name}');
       return await connectToDevice(device, type);
     } catch (e) {
       print('🔴 Error reconectando ${type.name}: $e');
@@ -79,9 +103,17 @@ class PrintService {
   /// Conecta a un dispositivo Bluetooth específico
   Future<bool> connectToDevice(BluetoothDevice device, PrinterType type) async {
     try {
+      // Verificar si ya está conectado al mismo dispositivo
+      final currentConnection = _printers[type];
+      if (currentConnection?.device?.address == device.address && currentConnection!.isConnected) {
+        print('✅ Ya conectado a ${device.name} como ${type.name}');
+        return true;
+      }
+
       // Desconectar conexión previa del mismo tipo si existe
       await disconnect(type);
 
+      print('🔵 Conectando a ${device.name} como ${type.name}...');
       final connection = await BluetoothConnection.toAddress(device.address);
       
       _printers[type] = PrinterConnection(
@@ -162,12 +194,15 @@ class PrintService {
     required String orderId,
     required DateTime orderTime,
   }) async {
+    print('🔵 Iniciando impresión de orden. Estado de conexión: ${isConnected(PrinterType.kitchen)}');
+    
     if (!isConnected(PrinterType.kitchen)) {
       print('🔴 No hay impresora de cocina conectada');
       return false;
     }
 
     try {
+      print('🔵 Generando contenido de orden...');
       final receipt = _buildOrderReceipt(
         orderItems: orderItems,
         table: table,
@@ -176,7 +211,14 @@ class PrintService {
         orderTime: orderTime,
       );
 
+      print('🔵 Enviando datos a impresora...');
       final printer = _printers[PrinterType.kitchen]!;
+      
+      if (printer.connection == null) {
+        print('🔴 Conexión de impresora es null');
+        return false;
+      }
+
       printer.connection!.output.add(receipt);
       await printer.connection!.output.allSent;
       
