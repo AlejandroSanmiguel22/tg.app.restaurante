@@ -150,11 +150,6 @@ class PrintService {
     // Configurar caracteres
     bytes.addAll([ESC, 0x74, 0x00]); // ESC t - Select character code table
 
-    // Centrar texto y agregar logo (simulado con texto)
-    bytes.addAll([ESC, 0x61, 0x01]); // ESC a - Center alignment
-    bytes.addAll(utf8.encode('*** RESTAURANTE TG ***'));
-    bytes.addAll([LF, LF]);
-
     bytes.addAll(utf8.encode('*** ORDEN DE COCINA ***'));
     bytes.addAll([LF, LF]);
 

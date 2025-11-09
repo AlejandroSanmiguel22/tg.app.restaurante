@@ -752,7 +752,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
           title: '¡Pedido cerrado!',
           message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}',
         );
-        Navigator.of(context).pop(); // Volver a la pantalla anterior
+        Navigator.of(context).pop(true); // Volver a la pantalla anterior con resultado exitoso
       } else {
         throw Exception('No se pudo cerrar el pedido');
       }

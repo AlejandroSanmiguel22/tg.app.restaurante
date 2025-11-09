@@ -275,12 +275,17 @@ class _HomePageState extends State<HomePage> {
         context.read<TableBloc>().add(RefreshTables());
       }
     } else if (table.isAttended) {
-      // Navegar a la pantalla de gestionar pedido
-      Navigator.of(context).push(
+      // Navegar a la pantalla de gestionar pedido y capturar el resultado
+      final result = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (context) => ManageOrderPage(table: table),
         ),
       );
+      
+      // Si se cerró una orden exitosamente, recargar las mesas
+      if (result == true) {
+        context.read<TableBloc>().add(RefreshTables());
+      }
     } else {
       // Mostrar mensaje de mesa no disponible (ocupada)
       ScaffoldMessenger.of(context).showSnackBar(
