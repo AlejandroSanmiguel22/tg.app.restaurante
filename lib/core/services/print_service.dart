@@ -399,9 +399,8 @@ class PrintService {
       final productName = item['productName']?.toString() ?? '';
       final unitPrice = (item['unitPrice'] as num?)?.toDouble() ?? 0.0;
       
-      bytes.addAll(utf8.encode('$quantity    $productName. ${_formatPrice(unitPrice)}'));
+      bytes.addAll(utf8.encode('$quantity  $productName.      ${_formatPrice(unitPrice)}'));
       bytes.addAll([LF]);
-      //bytes.addAll(utf8.encode('                        ${_formatPrice(unitPrice)}'));
       bytes.addAll([LF]);
     }
 
@@ -414,19 +413,24 @@ class PrintService {
     bytes.addAll([LF]);
 
     // Propina
-    bytes.addAll(utf8.encode('Propina Voluntaria   ${_formatPrice(tip)}'));
-    bytes.addAll([LF, LF]);
+    bytes.addAll(utf8.encode('Propina Voluntaria   ${_formatPrice(tip)}    '));
+    //bytes.addAll([LF, LF]);
+
+    // Línea separadora antes del total
+    bytes.addAll(utf8.encode('--------------------------------'));
+    bytes.addAll([LF]);
 
     // Total (en negrita y más grande)
     bytes.addAll([ESC, 0x45, 0x01]); // ESC E - Bold on
-    bytes.addAll([ESC, 0x21, 0x10]); // ESC ! - Double height
-    bytes.addAll(utf8.encode('--------------------------------'));
-    bytes.addAll([ESC, 0x45, 0x01]); // ESC E - Bold on
-    bytes.addAll([ESC, 0x21, 0x10]); // ESC ! - Double height
-    bytes.addAll(utf8.encode('TOTAL                ${_formatPrice(total)}'));
+    bytes.addAll([ESC, 0x21, 0x30]); // ESC ! - Double width and height
+    bytes.addAll(utf8.encode('TOTAL   ${_formatPrice(total)}')); 
     bytes.addAll([ESC, 0x21, 0x00]); // ESC ! - Normal size
     bytes.addAll([ESC, 0x45, 0x00]); // ESC E - Bold off
-    bytes.addAll([LF, LF]);
+ 
+
+    // Línea separadora antes del total
+    bytes.addAll(utf8.encode('--------------------------------'));
+    bytes.addAll([LF]);
 
     // Pie de página
     bytes.addAll(utf8.encode('En este establecimiento sugerimos una propina del 10% sobre'));
@@ -444,7 +448,7 @@ class PrintService {
     bytes.addAll([ESC, 0x61, 0x01]); // ESC a - Center alignment
     bytes.addAll(utf8.encode('GRACIAS POR TU VISITA'));
     bytes.addAll([LF]);
-    bytes.addAll(utf8.encode('¡ESPERAMOS VOLVERTE A VER PRONTO!'));
+    bytes.addAll(utf8.encode('ESPERAMOS VOLVERTE A VER PRONTO!'));
     bytes.addAll([LF, LF, LF]);
 
     // Cortar papel (si la impresora lo soporta)
