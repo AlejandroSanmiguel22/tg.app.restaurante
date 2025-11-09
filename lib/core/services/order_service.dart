@@ -101,20 +101,20 @@ class OrderService {
     }
   }
 
-  /// Generar factura para una orden y obtener los datos
-  Future<Map<String, dynamic>?> generateBillData(String orderId) async {
+  /// Generar factura para una orden y obtener los datos con opción de propina
+  Future<Map<String, dynamic>?> generateBillDataWithTip(String orderId, bool withTip) async {
     try {
       final token = await AuthService.getToken();
       if (token == null) {
         throw Exception('No hay token de autenticación');
       }
       
-      print('🔵 Generando factura para orden: $orderId');
+      print('🔵 Generando factura para orden: $orderId con propina: $withTip');
       
       final response = await _dio.post(
         '${AppConfig.baseUrl}/api/orders/$orderId/bill',
         data: {
-          'withTip': 'yes',
+          'withTip': withTip ? 'yes' : 'no',
         },
         options: Options(
           headers: {
@@ -124,7 +124,7 @@ class OrderService {
         ),
       );
       
-      print('🔵 Respuesta generar factura: ${response.statusCode}');
+      print('🔵 Respuesta generar factura con tip: ${response.statusCode}');
       print('🔵 Datos de la factura: ${response.data}');
       
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -133,9 +133,14 @@ class OrderService {
       
       return null;
     } catch (e) {
-      print('🔴 Error al generar factura: $e');
+      print('🔴 Error al generar factura con tip: $e');
       rethrow;
     }
+  }
+
+  /// Generar factura para una orden y obtener los datos
+  Future<Map<String, dynamic>?> generateBillData(String orderId) async {
+    return generateBillDataWithTip(orderId, true); // Por defecto con propina
   }
 
   /// Generar factura para una orden (método existente para compatibilidad)

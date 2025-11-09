@@ -701,71 +701,212 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
   void _closeOrder() {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            'Cerrar Pedido',
-            style: TextStyle(fontFamily: 'Poppins'),
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '¿Estás seguro de que deseas cerrar el pedido de la mesa ${widget.table.number}?',
-                style: const TextStyle(fontFamily: 'Poppins'),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                '¿Incluir propina?',
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w600,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icono y título
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFC83636),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.receipt_long,
+                    color: Colors.white,
+                    size: 40,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 20),
+                const Text(
+                  'Cerrar Pedido',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Poppins',
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '¿Estás seguro de que deseas cerrar el pedido de la mesa ${widget.table.number}?',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Poppins',
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Información del total
+                if (_currentOrder != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'SubTotal:',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              '\$ ${_formatPrice(_currentOrder!.subtotal)}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total:',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFC83636),
+                              ),
+                            ),
+                            Text(
+                              '\$ ${_formatPrice(_currentOrder!.total)}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFC83636),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
+                const Text(
+                  '¿Incluir propina del 10%?',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Botones
+                Row(
+                  children: [
+                    // Botón Cancelar
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.grey[300]!),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancelar',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Botón Sin Propina
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[600],
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _performCloseOrder(false); // Sin propina
+                        },
+                        child: const Text(
+                          'Sin Propina',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Botón Con Propina
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFC83636),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _performCloseOrder(true); // Con propina
+                        },
+                        child: const Text(
+                          'Con Propina',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(fontFamily: 'Poppins'),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[600],
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _performCloseOrder(false); // Sin propina
-              },
-              child: const Text(
-                'Sin Propina',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Poppins',
-                ),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC83636),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _performCloseOrder(true); // Con propina
-              },
-              child: const Text(
-                'Con Propina',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Poppins',
-                ),
-              ),
-            ),
-          ],
         );
       },
     );
@@ -779,17 +920,58 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
     });
 
     try {
-      final success = await _orderService.closeOrder(_currentOrder!.id, withTip);
+      // Primero generar y obtener los datos de la factura con la propina incluida
+      final billData = await _orderService.generateBillDataWithTip(_currentOrder!.id, withTip);
       
-      if (success) {
-        SnackBarService.showSuccess(
-          context: context,
-          title: '¡Pedido cerrado!',
-          message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}',
-        );
-        Navigator.of(context).pop(true); // Volver a la pantalla anterior con resultado exitoso
+      if (billData != null) {
+        // Cerrar la orden en el servidor
+        final success = await _orderService.closeOrder(_currentOrder!.id, withTip);
+        
+        if (success) {
+          // Verificar si hay impresora de facturas conectada
+          if (_printService.isConnected(PrinterType.bill)) {
+            // Imprimir la factura final
+            final printSuccess = await _printService.printBill(
+              orderId: billData['orderId'] ?? _currentOrder!.id,
+              tableNumber: billData['tableNumber'] ?? widget.table.number,
+              waiterName: billData['waiterName'] ?? 'Mesero',
+              items: billData['items'] ?? [],
+              subtotal: (billData['subtotal'] as num?)?.toDouble() ?? _currentOrder!.subtotal,
+              tip: (billData['tip'] as num?)?.toDouble() ?? 0.0,
+              total: (billData['total'] as num?)?.toDouble() ?? _currentOrder!.total,
+              tipPercentage: billData['tipPercentage'] ?? 0,
+              createdAt: billData['createdAt'] != null 
+                  ? DateTime.parse(billData['createdAt'])
+                  : DateTime.now(),
+            );
+
+            if (printSuccess) {
+              SnackBarService.showSuccess(
+                context: context,
+                title: '¡Pedido cerrado!',
+                message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}. Factura impresa.',
+              );
+            } else {
+              SnackBarService.showSuccess(
+                context: context,
+                title: '¡Pedido cerrado!',
+                message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}. Error al imprimir factura.',
+              );
+            }
+          } else {
+            SnackBarService.showSuccess(
+              context: context,
+              title: '¡Pedido cerrado!',
+              message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}. No hay impresora de facturas conectada.',
+            );
+          }
+          
+          Navigator.of(context).pop(true); // Volver a la pantalla anterior con resultado exitoso
+        } else {
+          throw Exception('No se pudo cerrar el pedido');
+        }
       } else {
-        throw Exception('No se pudo cerrar el pedido');
+        throw Exception('No se pudo obtener los datos de la factura');
       }
     } catch (e) {
       SnackBarService.showError(
