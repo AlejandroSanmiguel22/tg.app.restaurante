@@ -3,8 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dio/dio.dart';
 import '../../domain/entities/table_entity.dart';
 import '../../domain/entities/order_entity.dart';
-import '../../domain/entities/order_item_entity.dart';
 import '../../core/services/order_service.dart';
+import '../../core/services/print_service.dart';
 import '../../core/services/snackbar_service.dart';
 
 class ManageOrderPage extends StatefulWidget {
@@ -22,6 +22,7 @@ class ManageOrderPage extends StatefulWidget {
 class _ManageOrderPageState extends State<ManageOrderPage> {
   final Dio _dio = Dio();
   late OrderService _orderService;
+  final PrintService _printService = PrintService();
   
   OrderEntity? _currentOrder;
   bool _isLoading = false;
@@ -639,16 +640,50 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
     });
 
     try {
-      final success = await _orderService.generateBill(_currentOrder!.id);
-      
-      if (success) {
-        SnackBarService.showSuccess(
+      // Verificar si hay impresora de facturas conectada
+      if (!_printService.isConnected(PrinterType.bill)) {
+        SnackBarService.showError(
           context: context,
-          title: '¡Factura generada!',
-          message: 'Factura generada exitosamente para la mesa ${widget.table.number}',
+          title: 'Error de impresión',
+          message: 'No hay impresora de facturas conectada. Ve a Configuración > Impresoras para conectar una.',
         );
+        return;
+      }
+
+      // Generar factura en el servidor
+      final billData = await _orderService.generateBillData(_currentOrder!.id);
+      
+      if (billData != null) {
+        // Imprimir la factura
+        final printSuccess = await _printService.printBill(
+          orderId: billData['orderId'] ?? _currentOrder!.id,
+          tableNumber: billData['tableNumber'] ?? widget.table.number,
+          waiterName: billData['waiterName'] ?? 'Mesero',
+          items: billData['items'] ?? [],
+          subtotal: (billData['subtotal'] as num?)?.toDouble() ?? _currentOrder!.subtotal,
+          tip: (billData['tip'] as num?)?.toDouble() ?? 0.0,
+          total: (billData['total'] as num?)?.toDouble() ?? _currentOrder!.total,
+          tipPercentage: billData['tipPercentage'] ?? 0,
+          createdAt: billData['createdAt'] != null 
+              ? DateTime.parse(billData['createdAt'])
+              : DateTime.now(),
+        );
+
+        if (printSuccess) {
+          SnackBarService.showSuccess(
+            context: context,
+            title: '¡Factura generada!',
+            message: 'Factura generada e impresa exitosamente para la mesa ${widget.table.number}',
+          );
+        } else {
+          SnackBarService.showWarning(
+            context: context,
+            title: 'Factura generada',
+            message: 'Factura generada pero no se pudo imprimir. Verifica la conexión de la impresora.',
+          );
+        }
       } else {
-        throw Exception('No se pudo generar la factura');
+        throw Exception('No se pudo obtener los datos de la factura');
       }
     } catch (e) {
       SnackBarService.showError(

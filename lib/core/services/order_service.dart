@@ -101,8 +101,8 @@ class OrderService {
     }
   }
 
-  /// Generar factura para una orden
-  Future<bool> generateBill(String orderId) async {
+  /// Generar factura para una orden y obtener los datos
+  Future<Map<String, dynamic>?> generateBillData(String orderId) async {
     try {
       final token = await AuthService.getToken();
       if (token == null) {
@@ -125,17 +125,27 @@ class OrderService {
       );
       
       print('🔵 Respuesta generar factura: ${response.statusCode}');
+      print('🔵 Datos de la factura: ${response.data}');
       
-      return response.statusCode == 200 || response.statusCode == 201;
-    } on DioException catch (e) {
-      print('🔴 Error Dio al generar factura: ${e.response?.data}');
-      if (e.response?.statusCode == 401) {
-        throw Exception('Token de autenticación inválido');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data['data'];
       }
-      throw Exception('Error de conexión: ${e.message}');
+      
+      return null;
     } catch (e) {
-      print('🔴 Error inesperado al generar factura: $e');
-      throw Exception('Error inesperado: $e');
+      print('🔴 Error al generar factura: $e');
+      rethrow;
+    }
+  }
+
+  /// Generar factura para una orden (método existente para compatibilidad)
+  Future<bool> generateBill(String orderId) async {
+    try {
+      final billData = await generateBillData(orderId);
+      return billData != null;
+    } catch (e) {
+      print('🔴 Error al generar factura: $e');
+      return false;
     }
   }
 

@@ -91,6 +91,35 @@ class SnackBarService {
     );
   }
 
+  /// Mostrar SnackBar de advertencia
+  static void showWarning({
+    required BuildContext context,
+    required String title,
+    required String message,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: _buildSnackBarContent(
+          title: title,
+          message: message,
+          iconWidget: const Icon(
+            Icons.warning,
+            color: Colors.orange,
+            size: 28,
+          ),
+        ),
+        backgroundColor: const Color(0xFFFFFFFF),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+        elevation: 8, // Sombra al SnackBar
+      ),
+    );
+  }
+
   /// Construir el contenido del SnackBar
   static Widget _buildSnackBarContent({
     required String title,

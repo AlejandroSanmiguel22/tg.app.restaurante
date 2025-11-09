@@ -906,7 +906,7 @@ class _OrderPageState extends State<OrderPage> {
       final printService = PrintService();
       
       // Verificar si hay impresora conectada
-      if (!printService.isConnected) {
+      if (printService.isConnected != true) {
         // Intentar auto-conectar
         final autoConnected = await printService.autoConnect();
         if (!autoConnected) {
