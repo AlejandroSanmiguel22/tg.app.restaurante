@@ -212,7 +212,7 @@ class _OrderPageState extends State<OrderPage> {
   }
 
   double get _total {
-    const double tipPercentage = 0.03; // 3% de propina
+    const double tipPercentage = 0.10; // 10% de propina
     return _subtotal * (1 + tipPercentage);
   }
 
