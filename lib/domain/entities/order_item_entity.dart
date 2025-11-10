@@ -34,7 +34,7 @@ class OrderItem {
       name: json['productName'] ?? '',
       description: '',
       price: (json['unitPrice'] ?? 0).toDouble(),
-      imageUrl: null,
+      imageUrl: json['productImage'], // Ahora incluimos la imagen del producto
       category: '',
     );
 

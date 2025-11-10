@@ -54,6 +54,10 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
       if (order != null) {
         print('🔵 Orden activa cargada: ${order.id}');
         print('🔵 Items en orden: ${order.items.length}');
+        // Debug: verificar que las imágenes se estén cargando
+        for (var item in order.items) {
+          print('🔵 Item: ${item.product.name} - Imagen: ${item.product.imageUrl}');
+        }
       } else {
         print('🔵 No hay orden activa para la mesa ${widget.table.number}');
       }
@@ -329,19 +333,40 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
             children: [
               // Imagen del producto - más grande y redonda como en la imagen
               Container(
-                width: 60,
-                height: 60,
+                width: 70,
+                height: 70,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   color: Colors.grey[200],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: item.product.imageUrl != null
+                child: item.product.imageUrl != null && item.product.imageUrl!.isNotEmpty
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Image.network(
                           item.product.imageUrl!,
                           fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                                strokeWidth: 2,
+                                color: const Color(0xFFC83636),
+                              ),
+                            );
+                          },
                           errorBuilder: (context, error, stackTrace) {
+                            print('🔴 Error cargando imagen del producto: $error');
                             return const Icon(
                               Icons.fastfood,
                               color: Colors.grey,
