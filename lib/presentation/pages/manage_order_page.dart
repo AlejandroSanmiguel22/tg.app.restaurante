@@ -192,67 +192,16 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
       final updatedOrder = await _orderService.addItemsToOrder(_currentOrder!.id, _newCartItems);
       
       if (updatedOrder != null) {
-        // Guardar los IDs de los productos que acabamos de agregar
+        // Guardar los IDs de los productos que acabamos de agregar para marcarlos como recientes
         final newItemProductIds = _newCartItems.map((item) => item.productId).toSet();
         
-        // Crear un mapa de productId -> Product con imágenes para preservar las URLs
-        final productImageMap = <String, Product>{};
-        
-        // Agregar productos existentes
-        for (var item in _currentOrder!.items) {
-          productImageMap[item.productId] = item.product;
-        }
-        
-        // Agregar productos nuevos
-        for (var item in _newCartItems) {
-          productImageMap[item.productId] = item.product;
-        }
-        
-        // Actualizar los items de la orden con las imágenes preservadas
-        final updatedItems = updatedOrder.items.map((item) {
-          final originalProduct = productImageMap[item.productId];
-          if (originalProduct != null) {
-            // Crear un nuevo product con la imagen preservada
-            final updatedProduct = Product(
-              id: item.product.id,
-              name: item.product.name,
-              description: originalProduct.description,
-              price: item.product.price,
-              imageUrl: originalProduct.imageUrl, // Preservar la imagen original
-              category: originalProduct.category,
-            );
-            
-            return OrderItem(
-              productId: item.productId,
-              product: updatedProduct,
-              quantity: item.quantity,
-              notes: item.notes,
-              unitPrice: item.unitPrice,
-            );
-          }
-          return item;
-        }).toList();
-        
-        // Crear nueva orden con las imágenes preservadas
-        final orderWithImages = OrderEntity(
-          id: updatedOrder.id,
-          tableId: updatedOrder.tableId,
-          waiterId: updatedOrder.waiterId,
-          status: updatedOrder.status,
-          items: updatedItems,
-          subtotal: updatedOrder.subtotal,
-          tip: updatedOrder.tip,
-          total: updatedOrder.total,
-          createdAt: updatedOrder.createdAt,
-          updatedAt: updatedOrder.updatedAt,
-        );
-        
         setState(() {
-          _currentOrder = orderWithImages;
+          // Usar directamente la orden actualizada del servidor (ya incluye imágenes y totales)
+          _currentOrder = updatedOrder;
           
           // Marcar los items recién agregados basándose en el productId
           _recentlyAddedItemIds.addAll(
-            orderWithImages.items
+            updatedOrder.items
                 .where((item) => newItemProductIds.contains(item.productId))
                 .map((item) => '${item.productId}_${item.quantity}')
           );
@@ -975,6 +924,24 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
       );
     }
 
+    // Si hay productos pendientes, calcular preview del total
+    // Si no hay productos pendientes, usar valores del servidor directamente
+    double displaySubtotal;
+    double displayTotal;
+    
+    if (_newCartItems.isNotEmpty) {
+      // Calcular preview incluyendo items nuevos pendientes
+      double currentSubtotal = _currentOrder!.subtotal;
+      double newItemsSubtotal = _newCartItems.fold(0.0, (sum, item) => sum + item.totalPrice);
+      
+      displaySubtotal = currentSubtotal + newItemsSubtotal;
+      displayTotal = displaySubtotal + (displaySubtotal * 0.10); // Preview con propina del 10%
+    } else {
+      // Usar valores exactos del servidor
+      displaySubtotal = _currentOrder!.subtotal;
+      displayTotal = _currentOrder!.total;
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1001,7 +968,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
           ),
           const SizedBox(width: 8),
           Text(
-            '\$ ${_formatPrice(_currentOrder!.subtotal)}',
+            '\$ ${_formatPrice(displaySubtotal)}',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -1021,7 +988,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
           ),
           const SizedBox(width: 8),
           Text(
-            '\$ ${_formatPrice(_currentOrder!.total)}',
+            '\$ ${_formatPrice(displayTotal)}',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
