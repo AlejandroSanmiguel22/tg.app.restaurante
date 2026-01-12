@@ -42,6 +42,9 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
   List<OrderItem> _newCartItems = [];
   bool _showSearchDropdown = false;
   
+  // Lista para trackear items recién agregados
+  Set<String> _recentlyAddedItemIds = <String>{};
+  
   @override
   void initState() {
     super.initState();
@@ -81,6 +84,8 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
       setState(() {
         _currentOrder = order;
         _isLoading = false;
+        // Limpiar items recién agregados al cargar una nueva orden
+        _recentlyAddedItemIds.clear();
       });
       
       if (order != null) {
@@ -88,7 +93,8 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
         print('🔵 Items en orden: ${order.items.length}');
         // Debug: verificar que las imágenes se estén cargando
         for (var item in order.items) {
-          print('🔵 Item: ${item.product.name} - Imagen: ${item.product.imageUrl}');
+          print('🔵 Item existente: ${item.product.name} - Imagen: ${item.product.imageUrl}');
+          print('🔵 Imagen vacía: ${item.product.imageUrl?.isEmpty ?? true}');
         }
       } else {
         print('🔵 No hay orden activa para la mesa ${widget.table.number}');
@@ -134,6 +140,8 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
   }
 
   void _addToNewCart(Product product) {
+    print('🔵 Agregando producto: ${product.name} - Imagen: ${product.imageUrl}');
+    print('🔵 Imagen vacía: ${product.imageUrl?.isEmpty ?? true}');
     setState(() {
       final existingIndex = _newCartItems.indexWhere((item) => item.productId == product.id);
       if (existingIndex >= 0) {
@@ -184,8 +192,71 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
       final updatedOrder = await _orderService.addItemsToOrder(_currentOrder!.id, _newCartItems);
       
       if (updatedOrder != null) {
+        // Guardar los IDs de los productos que acabamos de agregar
+        final newItemProductIds = _newCartItems.map((item) => item.productId).toSet();
+        
+        // Crear un mapa de productId -> Product con imágenes para preservar las URLs
+        final productImageMap = <String, Product>{};
+        
+        // Agregar productos existentes
+        for (var item in _currentOrder!.items) {
+          productImageMap[item.productId] = item.product;
+        }
+        
+        // Agregar productos nuevos
+        for (var item in _newCartItems) {
+          productImageMap[item.productId] = item.product;
+        }
+        
+        // Actualizar los items de la orden con las imágenes preservadas
+        final updatedItems = updatedOrder.items.map((item) {
+          final originalProduct = productImageMap[item.productId];
+          if (originalProduct != null) {
+            // Crear un nuevo product con la imagen preservada
+            final updatedProduct = Product(
+              id: item.product.id,
+              name: item.product.name,
+              description: originalProduct.description,
+              price: item.product.price,
+              imageUrl: originalProduct.imageUrl, // Preservar la imagen original
+              category: originalProduct.category,
+            );
+            
+            return OrderItem(
+              productId: item.productId,
+              product: updatedProduct,
+              quantity: item.quantity,
+              notes: item.notes,
+              unitPrice: item.unitPrice,
+            );
+          }
+          return item;
+        }).toList();
+        
+        // Crear nueva orden con las imágenes preservadas
+        final orderWithImages = OrderEntity(
+          id: updatedOrder.id,
+          tableId: updatedOrder.tableId,
+          waiterId: updatedOrder.waiterId,
+          status: updatedOrder.status,
+          items: updatedItems,
+          subtotal: updatedOrder.subtotal,
+          tip: updatedOrder.tip,
+          total: updatedOrder.total,
+          createdAt: updatedOrder.createdAt,
+          updatedAt: updatedOrder.updatedAt,
+        );
+        
         setState(() {
-          _currentOrder = updatedOrder;
+          _currentOrder = orderWithImages;
+          
+          // Marcar los items recién agregados basándose en el productId
+          _recentlyAddedItemIds.addAll(
+            orderWithImages.items
+                .where((item) => newItemProductIds.contains(item.productId))
+                .map((item) => '${item.productId}_${item.quantity}')
+          );
+          
           _newCartItems.clear();
           _searchController.clear();
           _showSearchDropdown = false;
@@ -518,12 +589,16 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
         // Primero mostrar items existentes
         if (index < _currentOrder!.items.length) {
           final item = _currentOrder!.items[index];
+          final itemKey = '${item.productId}_${item.quantity}';
+          final isRecentlyAdded = _recentlyAddedItemIds.contains(itemKey);
+          
           return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
+            margin: EdgeInsets.only(bottom: isRecentlyAdded ? 8 : 12),
+            padding: EdgeInsets.all(isRecentlyAdded ? 12 : 16),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(12),
+              color: isRecentlyAdded ? Colors.red[50] : Colors.grey[100],
+              borderRadius: BorderRadius.circular(isRecentlyAdded ? 8 : 12),
+              border: isRecentlyAdded ? Border.all(color: Colors.red.withOpacity(0.3), width: 2) : null,
             ),
             child: Row(
               children: [
@@ -562,6 +637,8 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
                               );
                             },
                             errorBuilder: (context, error, stackTrace) {
+                              print('🔴 Error cargando imagen existente: $error');
+                              print('🔴 URL de imagen existente: ${item.product.imageUrl}');
                               return const Icon(
                                 Icons.fastfood,
                                 color: Colors.grey,
@@ -658,16 +735,38 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey[200],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: newItem.product.imageUrl != null
+                  child: newItem.product.imageUrl != null && newItem.product.imageUrl!.isNotEmpty
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(
                             newItem.product.imageUrl!,
                             fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  strokeWidth: 2,
+                                  color: const Color(0xFFC83636),
+                                ),
+                              );
+                            },
                             errorBuilder: (context, error, stackTrace) {
+                              print('🔴 Error cargando imagen: $error');
+                              print('🔴 URL de imagen: ${newItem.product.imageUrl}');
                               return const Icon(
                                 Icons.fastfood,
                                 color: Colors.grey,
@@ -1043,7 +1142,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
                   Text(
                     hasNewItems 
                         ? 'Agregar ${_newCartItems.length} producto${_newCartItems.length != 1 ? 's' : ''} a la orden'
-                        : 'Agrega productos para continuar',
+                        : 'Agrega productos a la orden',
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Poppins',
@@ -1479,6 +1578,9 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
               message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}. No hay impresora de facturas conectada.',
             );
           }
+          
+          // Limpiar items recién agregados al cerrar la orden
+          _recentlyAddedItemIds.clear();
           
           Navigator.of(context).pop(true); // Volver a la pantalla anterior con resultado exitoso
         } else {
