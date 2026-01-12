@@ -359,7 +359,7 @@ class PrintService {
     bytes.addAll([ESC, 0x61, 0x01]); // ESC a - Center alignment
     bytes.addAll(utf8.encode('Restaurante Arroz Paisa Arrieros'));
     bytes.addAll([LF]);
-    bytes.addAll(utf8.encode('JOHN FREDY NUÑEZ RENGIFO'));
+    bytes.addAll(utf8.encode('JOHN FREDY NUNEZ RENGIFO'));
     bytes.addAll([LF]);
     bytes.addAll(utf8.encode('NIT : 93.413.545-3'));
     bytes.addAll([LF]);
@@ -418,7 +418,7 @@ class PrintService {
     bytes.addAll([LF]);
     bytes.addAll(utf8.encode('el valor total del consumo. El cliente puede decidir si la'));
     bytes.addAll([LF]);
-    bytes.addAll(utf8.encode('acepta, modificarla o rechazarla. En caso de no querer incluirla,'));
+    bytes.addAll(utf8.encode('acepta o la rechaza. En caso de no querer incluirla,'));
     bytes.addAll([LF]);
     bytes.addAll(utf8.encode('puede informarlo al momento de realizar el pago, conforme'));
     bytes.addAll([LF]);
