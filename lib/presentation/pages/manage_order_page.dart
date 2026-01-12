@@ -665,12 +665,12 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
     });
 
     try {
-      // Verificar si hay impresora de facturas conectada
-      if (!_printService.isConnected(PrinterType.bill)) {
+      // Verificar si hay impresora conectada
+      if (!_printService.isConnected(PrinterType.main)) {
         SnackBarService.showError(
           context: context,
           title: 'Error de impresión',
-          message: 'No hay impresora de facturas conectada. Ve a Configuración > Impresoras para conectar una.',
+          message: 'No hay impresora conectada. Ve a Configuración > Impresoras para conectar una.',
         );
         return;
       }
@@ -953,8 +953,8 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
         final success = await _orderService.closeOrder(_currentOrder!.id, withTip);
         
         if (success) {
-          // Verificar si hay impresora de facturas conectada
-          if (_printService.isConnected(PrinterType.bill)) {
+          // Verificar si hay impresora conectada
+          if (_printService.isConnected(PrinterType.main)) {
             // Imprimir la factura final
             final printSuccess = await _printService.printBill(
               orderId: billData['orderId'] ?? _currentOrder!.id,

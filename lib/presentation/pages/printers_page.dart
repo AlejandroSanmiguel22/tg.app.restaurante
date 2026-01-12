@@ -16,8 +16,7 @@ class _PrintersPageState extends State<PrintersPage> {
   List<BluetoothDevice> _printers = [];
   bool _isLoading = false;
   bool _isConnecting = false;
-  BluetoothDevice? _connectedKitchenDevice;
-  BluetoothDevice? _connectedBillDevice;
+  BluetoothDevice? _connectedDevice;
 
   @override
   void initState() {
@@ -26,18 +25,16 @@ class _PrintersPageState extends State<PrintersPage> {
   }
 
   Future<void> _initializePage() async {
-    // Verificar si ya hay impresoras conectadas
+    // Verificar si ya hay impresora conectada
     setState(() {
-      _connectedKitchenDevice = _printService.getConnectedDevice(PrinterType.kitchen);
-      _connectedBillDevice = _printService.getConnectedDevice(PrinterType.bill);
+      _connectedDevice = _printService.getConnectedDevice(PrinterType.main);
     });
 
-    // Si no hay impresoras conectadas, intentar auto-conectar
-    if (!_printService.isConnected(PrinterType.kitchen) && !_printService.isConnected(PrinterType.bill)) {
+    // Si no hay impresora conectada, intentar auto-conectar
+    if (!_printService.isConnected(PrinterType.main)) {
       await _printService.autoConnect();
       setState(() {
-        _connectedKitchenDevice = _printService.getConnectedDevice(PrinterType.kitchen);
-        _connectedBillDevice = _printService.getConnectedDevice(PrinterType.bill);
+        _connectedDevice = _printService.getConnectedDevice(PrinterType.main);
       });
     }
     
@@ -92,31 +89,27 @@ class _PrintersPageState extends State<PrintersPage> {
     }
   }
 
-  Future<void> _connectToPrinter(BluetoothDevice device, PrinterType type) async {
+  Future<void> _connectToPrinter(BluetoothDevice device) async {
     setState(() {
       _isConnecting = true;
     });
 
     try {
-      final success = await _printService.connectToDevice(device, type);
+      final success = await _printService.connectToDevice(device, PrinterType.main);
       
       if (success) {
         setState(() {
-          if (type == PrinterType.kitchen) {
-            _connectedKitchenDevice = device;
-          } else {
-            _connectedBillDevice = device;
-          }
+          _connectedDevice = device;
         });
         
         SnackBarService.showSuccess(
           context: context,
           title: 'Conectado',
-          message: 'Conectado a ${device.name} (${type.name})',
+          message: 'Conectado a ${device.name}',
         );
 
         // Imprimir página de prueba
-        await _printService.printTestPage(type);
+        await _printService.printTestPage(PrinterType.main);
       } else {
         SnackBarService.showError(
           context: context,
@@ -137,20 +130,16 @@ class _PrintersPageState extends State<PrintersPage> {
     }
   }
 
-  Future<void> _disconnectPrinter(PrinterType type) async {
-    await _printService.disconnect(type);
+  Future<void> _disconnectPrinter() async {
+    await _printService.disconnect(PrinterType.main);
     setState(() {
-      if (type == PrinterType.kitchen) {
-        _connectedKitchenDevice = null;
-      } else {
-        _connectedBillDevice = null;
-      }
+      _connectedDevice = null;
     });
     
     SnackBarService.showInfo(
       context: context,
       title: 'Desconectado',
-      message: 'Impresora ${type.name} desconectada',
+      message: 'Impresora desconectada',
     );
   }
 
@@ -272,149 +261,74 @@ class _PrintersPageState extends State<PrintersPage> {
   }
 
   Widget _buildConnectionStatus() {
-    return Column(
-      children: [
-        // Estado impresora de cocina
-        Container(
-          padding: const EdgeInsets.all(12),
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: _connectedKitchenDevice != null 
-                ? Colors.green.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: _connectedKitchenDevice != null 
-                  ? Colors.green
-                  : Colors.grey.withOpacity(0.3),
-            ),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: _connectedDevice != null 
+            ? Colors.green.withOpacity(0.1)
+            : Colors.grey.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: _connectedDevice != null 
+              ? Colors.green
+              : Colors.grey.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _connectedDevice != null 
+                ? Icons.bluetooth_connected
+                : Icons.bluetooth_disabled,
+            color: _connectedDevice != null 
+                ? Colors.green
+                : Colors.grey[600],
+            size: 20,
           ),
-          child: Row(
-            children: [
-              Icon(
-                _connectedKitchenDevice != null 
-                    ? Icons.bluetooth_connected
-                    : Icons.bluetooth_disabled,
-                color: _connectedKitchenDevice != null 
-                    ? Colors.green
-                    : Colors.grey[600],
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Impresora Cocina: ${_connectedKitchenDevice != null ? 'Conectada' : 'No conectada'}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Poppins',
-                        color: _connectedKitchenDevice != null 
-                            ? Colors.green[700]
-                            : Colors.grey[700],
-                      ),
-                    ),
-                    if (_connectedKitchenDevice != null)
-                      Text(
-                        _connectedKitchenDevice!.name ?? 'Dispositivo desconocido',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'Poppins',
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              if (_connectedKitchenDevice != null)
-                TextButton(
-                  onPressed: () => _disconnectPrinter(PrinterType.kitchen),
-                  child: const Text(
-                    'Desconectar',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12,
-                    ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Impresora Principal: ${_connectedDevice != null ? 'Conectada' : 'No conectada'}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Poppins',
+                    color: _connectedDevice != null 
+                        ? Colors.green[700]
+                        : Colors.grey[700],
                   ),
                 ),
-            ],
-          ),
-        ),
-
-        // Estado impresora de facturas
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: _connectedBillDevice != null 
-                ? Colors.green.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: _connectedBillDevice != null 
-                  ? Colors.green
-                  : Colors.grey.withOpacity(0.3),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                _connectedBillDevice != null 
-                    ? Icons.bluetooth_connected
-                    : Icons.bluetooth_disabled,
-                color: _connectedBillDevice != null 
-                    ? Colors.green
-                    : Colors.grey[600],
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Impresora Facturas: ${_connectedBillDevice != null ? 'Conectada' : 'No conectada'}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Poppins',
-                        color: _connectedBillDevice != null 
-                            ? Colors.green[700]
-                            : Colors.grey[700],
-                      ),
-                    ),
-                    if (_connectedBillDevice != null)
-                      Text(
-                        _connectedBillDevice!.name ?? 'Dispositivo desconocido',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'Poppins',
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              if (_connectedBillDevice != null)
-                TextButton(
-                  onPressed: () => _disconnectPrinter(PrinterType.bill),
-                  child: const Text(
-                    'Desconectar',
+                if (_connectedDevice != null)
+                  Text(
+                    _connectedDevice!.name ?? 'Dispositivo desconocido',
                     style: TextStyle(
-                      color: Colors.red,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
                       fontSize: 12,
+                      fontFamily: 'Poppins',
+                      color: Colors.grey[600],
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+          if (_connectedDevice != null)
+            TextButton(
+              onPressed: () => _disconnectPrinter(),
+              child: const Text(
+                'Desconectar',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -466,9 +380,7 @@ class _PrintersPageState extends State<PrintersPage> {
       itemCount: _printers.length,
       itemBuilder: (context, index) {
         final printer = _printers[index];
-        final isKitchenConnected = _connectedKitchenDevice?.address == printer.address;
-        final isBillConnected = _connectedBillDevice?.address == printer.address;
-        final isConnected = isKitchenConnected || isBillConnected;
+        final isConnected = _connectedDevice?.address == printer.address;
         
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -531,7 +443,7 @@ class _PrintersPageState extends State<PrintersPage> {
                             fontFamily: 'Poppins',
                           ),
                         ),
-                        if (isKitchenConnected) ...[
+                        if (isConnected) ...[
                           const SizedBox(height: 4),
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -543,7 +455,7 @@ class _PrintersPageState extends State<PrintersPage> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
-                              'Cocina',
+                              'Conectada',
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.green,
@@ -553,39 +465,15 @@ class _PrintersPageState extends State<PrintersPage> {
                             ),
                           ),
                         ],
-                        if (isBillConnected) ...[
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'Facturas',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.blue,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),
-                  // Botones de conectar
+                  // Botón de conectar
                   if (!isConnected)
-                    Column(
-                      children: [
-                        ElevatedButton(
-                          onPressed: _isConnecting 
-                              ? null 
-                              : () => _connectToPrinter(printer, PrinterType.kitchen),
+                    ElevatedButton(
+                      onPressed: _isConnecting 
+                          ? null 
+                          : () => _connectToPrinter(printer),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFC83636),
                             foregroundColor: Colors.white,
@@ -608,7 +496,7 @@ class _PrintersPageState extends State<PrintersPage> {
                                   ),
                                 )
                               : const Text(
-                                  'Cocina',
+                                  'Conectar',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontFamily: 'Poppins',
@@ -616,43 +504,6 @@ class _PrintersPageState extends State<PrintersPage> {
                                   ),
                                 ),
                         ),
-                        const SizedBox(height: 4),
-                        ElevatedButton(
-                          onPressed: _isConnecting 
-                              ? null 
-                              : () => _connectToPrinter(printer, PrinterType.bill),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            minimumSize: const Size(70, 30),
-                          ),
-                          child: _isConnecting
-                              ? const SizedBox(
-                                  width: 12,
-                                  height: 12,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  ),
-                                )
-                              : const Text(
-                                  'Facturas',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                        ),
-                      ],
-                    ),
                 ],
               ),
             ),

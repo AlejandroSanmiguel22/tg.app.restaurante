@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/order_item_entity.dart';
 import '../../domain/entities/table_entity.dart';
 
-enum PrinterType { kitchen, bill }
+enum PrinterType { main }
 
 class PrinterConnection {
   BluetoothConnection? connection;
@@ -22,12 +22,10 @@ class PrinterConnection {
 }
 
 class PrintService {
-  static const String _kitchenPrinterKey = 'kitchen_printer_device';
-  static const String _billPrinterKey = 'bill_printer_device';
+  static const String _mainPrinterKey = 'main_printer_device';
   
   final Map<PrinterType, PrinterConnection> _printers = {
-    PrinterType.kitchen: PrinterConnection(type: PrinterType.kitchen),
-    PrinterType.bill: PrinterConnection(type: PrinterType.bill),
+    PrinterType.main: PrinterConnection(type: PrinterType.main),
   };
 
   // Singleton pattern para mantener las conexiones
@@ -43,34 +41,19 @@ class PrintService {
       
       print('🔵 Iniciando auto-conexión...');
       
-      // Intentar reconectar impresora de cocina
-      final kitchenAddress = prefs.getString(_kitchenPrinterKey);
-      if (kitchenAddress != null) {
-        print('🔵 Intentando reconectar impresora de cocina: $kitchenAddress');
-        final success = await _reconnectPrinter(kitchenAddress, PrinterType.kitchen);
+      // Intentar reconectar impresora principal
+      final mainAddress = prefs.getString(_mainPrinterKey);
+      if (mainAddress != null) {
+        print('🔵 Intentando reconectar impresora principal: $mainAddress');
+        final success = await _reconnectPrinter(mainAddress, PrinterType.main);
         if (success) {
           anyConnected = true;
-          print('✅ Impresora de cocina reconectada exitosamente');
+          print('✅ Impresora principal reconectada exitosamente');
         } else {
-          print('🔴 No se pudo reconectar impresora de cocina');
+          print('🔴 No se pudo reconectar impresora principal');
         }
       } else {
-        print('🔵 No hay dirección guardada para impresora de cocina');
-      }
-      
-      // Intentar reconectar impresora de facturas
-      final billAddress = prefs.getString(_billPrinterKey);
-      if (billAddress != null) {
-        print('🔵 Intentando reconectar impresora de facturas: $billAddress');
-        final success = await _reconnectPrinter(billAddress, PrinterType.bill);
-        if (success) {
-          anyConnected = true;
-          print('✅ Impresora de facturas reconectada exitosamente');
-        } else {
-          print('🔴 No se pudo reconectar impresora de facturas');
-        }
-      } else {
-        print('🔵 No hay dirección guardada para impresora de facturas');
+        print('🔵 No hay dirección guardada para impresora principal');
       }
 
       print('🔵 Auto-conexión completada. Alguna conectada: $anyConnected');
@@ -124,8 +107,7 @@ class PrintService {
 
       // Guardar dispositivo conectado
       final prefs = await SharedPreferences.getInstance();
-      final key = type == PrinterType.kitchen ? _kitchenPrinterKey : _billPrinterKey;
-      await prefs.setString(key, device.address);
+      await prefs.setString(_mainPrinterKey, device.address);
 
       print('✅ Conectado a impresora ${type.name}: ${device.name}');
       return true;
@@ -150,21 +132,20 @@ class PrintService {
 
   /// Desconecta todas las impresoras
   Future<void> disconnectAll() async {
-    await disconnect(PrinterType.kitchen);
-    await disconnect(PrinterType.bill);
+    await disconnect(PrinterType.main);
   }
 
   /// Verifica si hay una impresora conectada del tipo especificado
   bool isConnected(PrinterType type) => _printers[type]?.isConnected ?? false;
 
   /// Verifica si hay alguna impresora conectada
-  bool get hasAnyPrinterConnected => isConnected(PrinterType.kitchen) || isConnected(PrinterType.bill);
+  bool get hasAnyPrinterConnected => isConnected(PrinterType.main);
 
   /// Obtiene el dispositivo conectado del tipo especificado
   BluetoothDevice? getConnectedDevice(PrinterType type) => _printers[type]?.device;
 
   /// Obtiene el dispositivo conectado (para compatibilidad con código anterior)
-  BluetoothDevice? get connectedDevice => getConnectedDevice(PrinterType.kitchen) ?? getConnectedDevice(PrinterType.bill);
+  BluetoothDevice? get connectedDevice => getConnectedDevice(PrinterType.main);
 
   /// Obtiene lista de impresoras disponibles (dispositivos emparejados)
   Future<List<BluetoothDevice>> getAvailablePrinters() async {
@@ -194,10 +175,10 @@ class PrintService {
     required String orderId,
     required DateTime orderTime,
   }) async {
-    print('🔵 Iniciando impresión de orden. Estado de conexión: ${isConnected(PrinterType.kitchen)}');
+    print('🔵 Iniciando impresión de orden. Estado de conexión: ${isConnected(PrinterType.main)}');
     
-    if (!isConnected(PrinterType.kitchen)) {
-      print('🔴 No hay impresora de cocina conectada');
+    if (!isConnected(PrinterType.main)) {
+      print('🔴 No hay impresora conectada');
       return false;
     }
 
@@ -212,7 +193,7 @@ class PrintService {
       );
 
       print('🔵 Enviando datos a impresora...');
-      final printer = _printers[PrinterType.kitchen]!;
+      final printer = _printers[PrinterType.main]!;
       
       if (printer.connection == null) {
         print('🔴 Conexión de impresora es null');
@@ -242,8 +223,8 @@ class PrintService {
     required int tipPercentage,
     required DateTime createdAt,
   }) async {
-    if (!isConnected(PrinterType.bill)) {
-      print('🔴 No hay impresora de facturas conectada');
+    if (!isConnected(PrinterType.main)) {
+      print('🔴 No hay impresora conectada');
       return false;
     }
 
@@ -260,7 +241,7 @@ class PrintService {
         createdAt: createdAt,
       );
 
-      final printer = _printers[PrinterType.bill]!;
+      final printer = _printers[PrinterType.main]!;
       printer.connection!.output.add(receipt);
       await printer.connection!.output.allSent;
       
@@ -502,7 +483,7 @@ class PrintService {
 
   /// Método de prueba para imprimir texto simple
   Future<bool> printTestPage([PrinterType? printerType]) async {
-    final type = printerType ?? PrinterType.kitchen;
+    final type = printerType ?? PrinterType.main;
     
     if (!isConnected(type)) {
       print('🔴 No hay impresora ${type.name} conectada');

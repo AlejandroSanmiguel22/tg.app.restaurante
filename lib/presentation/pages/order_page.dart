@@ -905,25 +905,25 @@ class _OrderPageState extends State<OrderPage> {
     try {
       final printService = PrintService(); // Esto es un singleton, mantendrá el estado
       
-      print('🔵 Intentando imprimir orden. Estado de impresora cocina: ${printService.isConnected(PrinterType.kitchen)}');
+      print('🔵 Intentando imprimir orden. Estado de impresora principal: ${printService.isConnected(PrinterType.main)}');
       
-      // Verificar si hay impresora de cocina conectada
-      if (!printService.isConnected(PrinterType.kitchen)) {
-        print('🔴 No hay impresora de cocina conectada, intentando auto-conectar...');
+      // Verificar si hay impresora conectada
+      if (!printService.isConnected(PrinterType.main)) {
+        print('🔴 No hay impresora conectada, intentando auto-conectar...');
         // Intentar auto-conectar
         await printService.autoConnect();
-        if (!printService.isConnected(PrinterType.kitchen)) {
-          print('🔴 No se pudo auto-conectar a impresora de cocina');
+        if (!printService.isConnected(PrinterType.main)) {
+          print('🔴 No se pudo auto-conectar a impresora');
           SnackBarService.showInfo(
             context: context,
-            title: 'Sin impresora de cocina',
-            message: 'No hay impresora de cocina conectada. Ve a configuración de impresoras.',
+            title: 'Sin impresora',
+            message: 'No hay impresora conectada. Ve a configuración de impresoras.',
           );
           return;
         }
       }
 
-      print('🔵 Impresora de cocina conectada, procediendo a imprimir...');
+      print('🔵 Impresora conectada, procediendo a imprimir...');
 
       // Generar ID de orden único basado en timestamp
       final orderId = DateTime.now().millisecondsSinceEpoch.toString();
