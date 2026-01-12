@@ -191,4 +191,52 @@ class OrderService {
       throw Exception('Error inesperado: $e');
     }
   }
+
+  /// Agregar productos a una orden existente
+  Future<OrderEntity?> addItemsToOrder(String orderId, List<OrderItem> items) async {
+    try {
+      final token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No hay token de autenticación');
+      }
+      
+      final requestData = {
+        'items': items.map((item) => {
+          'productId': item.productId,
+          'quantity': item.quantity,
+        }).toList(),
+      };
+      
+      print('🔵 Agregando items a orden: $orderId con datos: $requestData');
+      
+      final response = await _dio.post(
+        '${AppConfig.baseUrl}/api/orders/$orderId/items',
+        data: requestData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+      
+      print('🔵 Respuesta agregar items: ${response.statusCode}');
+      print('🔵 Datos respuesta: ${response.data}');
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return OrderEntity.fromJson(response.data['data']);
+      }
+      
+      return null;
+    } on DioException catch (e) {
+      print('🔴 Error Dio al agregar items a orden: ${e.response?.data}');
+      if (e.response?.statusCode == 401) {
+        throw Exception('Token de autenticación inválido');
+      }
+      throw Exception('Error de conexión: ${e.message}');
+    } catch (e) {
+      print('🔴 Error inesperado al agregar items a orden: $e');
+      throw Exception('Error inesperado: $e');
+    }
+  }
 }
