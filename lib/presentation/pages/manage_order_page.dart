@@ -9,6 +9,7 @@ import '../../core/services/order_service.dart';
 import '../../core/services/product_service.dart';
 import '../../core/services/print_service.dart';
 import '../../core/services/snackbar_service.dart';
+import '../../core/services/auth_service.dart';
 
 class ManageOrderPage extends StatefulWidget {
   final TableEntity table;
@@ -184,11 +185,139 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
       return;
     }
 
+    // Mostrar diálogo de confirmación para impresión
+    _showPrintConfirmationDialog();
+  }
+
+  void _showPrintConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icono y título
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFC83636),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.print,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Imprimir a Cocina',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Poppins',
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '¿Deseas imprimir ${_newCartItems.length} producto${_newCartItems.length != 1 ? 's' : ''} a cocina?',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Poppins',
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Botones
+                Row(
+                  children: [
+                    // Botón No imprimir
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _performAddItemsToOrder(false);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[300],
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'No imprimir',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Botón Sí, imprimir
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _performAddItemsToOrder(true);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFC83636),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 2,
+                        ),
+                        child: const Text(
+                          'Sí, imprimir',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _performAddItemsToOrder(bool printToKitchen) async {
     setState(() {
       _isUpdating = true;
     });
 
     try {
+      // Guardar los items para impresión ANTES de limpiar la lista
+      final itemsToAdd = List<OrderItem>.from(_newCartItems);
+      
       final updatedOrder = await _orderService.addItemsToOrder(_currentOrder!.id, _newCartItems);
       
       if (updatedOrder != null) {
@@ -211,11 +340,16 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
           _showSearchDropdown = false;
         });
 
-        SnackBarService.showSuccess(
-          context: context,
-          title: 'Productos agregados',
-          message: 'Los productos han sido agregados a la orden exitosamente',
-        );
+        // Si el usuario eligió imprimir, intentar imprimir a cocina
+        if (printToKitchen) {
+          await _printNewItemsToKitchen(itemsToAdd);
+        } else {
+          SnackBarService.showSuccess(
+            context: context,
+            title: 'Productos agregados',
+            message: 'Los productos han sido agregados a la orden exitosamente',
+          );
+        }
       } else {
         SnackBarService.showError(
           context: context,
@@ -233,6 +367,76 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
       setState(() {
         _isUpdating = false;
       });
+    }
+  }
+
+  Future<void> _printNewItemsToKitchen(List<OrderItem> itemsToPrint) async {
+    try {
+      print('🔵 Intentando imprimir productos agregados. Cantidad de items: ${itemsToPrint.length}');
+      print('🔵 Estado de impresora principal: ${_printService.isConnected(PrinterType.main)}');
+      
+      // Verificar si hay impresora conectada
+      if (!_printService.isConnected(PrinterType.main)) {
+        print('🔴 No hay impresora conectada, intentando auto-conectar...');
+        // Intentar auto-conectar
+        await _printService.autoConnect();
+        if (!_printService.isConnected(PrinterType.main)) {
+          print('🔴 No se pudo auto-conectar a impresora');
+          SnackBarService.showWarning(
+            context: context,
+            title: 'Productos agregados',
+            message: 'Los productos han sido agregados pero no hay impresora conectada',
+          );
+          return;
+        }
+      }
+
+      print('🔵 Impresora conectada, procediendo a imprimir...');
+
+      // Obtener datos del usuario para el nombre del mesero
+      final userData = await AuthService.getUserData();
+      final waiterName = userData['userName'] ?? 'Mesero';
+
+      // Generar ID único para esta impresión
+      final printId = DateTime.now().millisecondsSinceEpoch.toString();
+      final printTime = DateTime.now();
+
+      // Debug: verificar que los items tienen datos
+      for (var item in itemsToPrint) {
+        print('🔵 Item a imprimir: ${item.product.name} - Cantidad: ${item.quantity}');
+      }
+
+      // Imprimir los nuevos productos
+      final printSuccess = await _printService.printOrderReceipt(
+        orderItems: itemsToPrint,
+        table: widget.table,
+        waiterName: waiterName,
+        orderId: "${_currentOrder!.id}_add_$printId",
+        orderTime: printTime,
+      );
+
+      if (printSuccess) {
+        print('✅ Impresión exitosa de productos agregados');
+        SnackBarService.showSuccess(
+          context: context,
+          title: 'Productos agregados',
+          message: 'Los productos han sido agregados a la orden y enviados a cocina',
+        );
+      } else {
+        print('🔴 Error en impresión de productos agregados');
+        SnackBarService.showWarning(
+          context: context,
+          title: 'Productos agregados',
+          message: 'Los productos han sido agregados pero no se pudo imprimir a cocina',
+        );
+      }
+    } catch (e) {
+      print('🔴 Error al imprimir productos agregados: $e');
+      SnackBarService.showWarning(
+        context: context,
+        title: 'Productos agregados',
+        message: 'Los productos han sido agregados pero hubo un error al imprimir: $e',
+      );
     }
   }
 
