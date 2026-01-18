@@ -852,6 +852,130 @@ class _OrderPageState extends State<OrderPage> {
       return;
     }
 
+    // Mostrar diálogo de confirmación para impresión
+    _showPrintConfirmationDialog();
+  }
+
+  void _showPrintConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icono y título
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC83636).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.print,
+                    size: 32,
+                    color: Color(0xFFC83636),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  '¿Imprimir ticket de cocina?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Poppins',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Los productos serán agregados a la orden. ¿Deseas imprimir el ticket para cocina?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontFamily: 'Poppins',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+
+                // Botones
+                Row(
+                  children: [
+                    // Botón No imprimir
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(); // Cerrar diálogo
+                          _performCreateOrder(false); // Crear sin imprimir
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(color: Colors.grey[400]!),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'No imprimir',
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 14,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Botón Sí, imprimir
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(); // Cerrar diálogo
+                          _performCreateOrder(true); // Crear e imprimir
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFC83636),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Sí, imprimir',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _performCreateOrder(bool printToKitchen) async {
     setState(() {
       _isCreatingOrder = true;
     });
@@ -875,14 +999,17 @@ class _OrderPageState extends State<OrderPage> {
       );
 
       if (success) {
-        // Intentar imprimir la factura
-        await _printOrderReceipt(waiterName);
-
-        SnackBarService.showSuccess(
-          context: context,
-          title: '¡Pedido creado!',
-          message: 'Pedido creado exitosamente para mesa ${widget.table.number}',
-        );
+        // Si el usuario eligió imprimir, intentar imprimir a cocina
+        if (printToKitchen) {
+          await _printOrderReceipt(waiterName);
+        } else {
+          SnackBarService.showSuccess(
+            context: context,
+            title: '¡Pedido creado!',
+            message: 'Pedido creado exitosamente para mesa ${widget.table.number}',
+          );
+        }
+        
         // Retornar true para indicar que se creó una orden exitosamente
         Navigator.of(context).pop(true);
       } else {
@@ -942,23 +1069,23 @@ class _OrderPageState extends State<OrderPage> {
         print('✅ Impresión exitosa');
         SnackBarService.showSuccess(
           context: context,
-          title: 'Factura impresa',
-          message: 'Orden enviada a cocina',
+          title: '¡Pedido creado!',
+          message: 'Pedido creado exitosamente y ticket enviado a cocina',
         );
       } else {
         print('🔴 Error en impresión');
-        SnackBarService.showInfo(
+        SnackBarService.showWarning(
           context: context,
-          title: 'Error de impresión',
-          message: 'La orden se guardó pero no se pudo imprimir',
+          title: 'Pedido creado',
+          message: 'El pedido se guardó pero no se pudo imprimir el ticket',
         );
       }
     } catch (e) {
       print('🔴 Error al imprimir: $e');
-      SnackBarService.showInfo(
+      SnackBarService.showWarning(
         context: context,
-        title: 'Error de impresión',
-        message: 'La orden se guardó pero no se pudo imprimir: $e',
+        title: 'Pedido creado',
+        message: 'El pedido se guardó pero no se pudo imprimir: $e',
       );
     }
   }
