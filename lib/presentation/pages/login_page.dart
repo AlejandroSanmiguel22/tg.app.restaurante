@@ -19,23 +19,24 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          Positioned(
-            top: 37,
-            left: 0,
-            right: 0,
-            child: Image.asset(
-              'assets/images/logo.png', 
-              width: MediaQuery.of(context).size.width,
-              fit: BoxFit.fitWidth,
-              
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(), // Ocultar teclado al tocar fuera
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: false, // Evita que el scaffold se redimensione con el teclado
+        body: Stack(
+          children: [
+            Positioned(
+              top: 37,
+              left: 0,
+              right: 0,
+              child: Image.asset(
+                'assets/images/logo.png', 
+                width: MediaQuery.of(context).size.width,
+                fit: BoxFit.fitWidth,
+              ),
             ),
-          ),
-          SafeArea(
-            child: SingleChildScrollView(
+            SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 75.0),
                 child: Column(
@@ -219,8 +220,8 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
