@@ -1373,7 +1373,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
                       ),
                       const SizedBox(width: 6),
                       SvgPicture.asset(
-                        isInKitchen ? 'assets/icons/send.svg' : 'assets/icons/factura.svg',
+                        'assets/icons/factura.svg',
                         width: 16,
                         height: 16,
                         color: (_currentOrder == null || _isUpdating) ? Colors.grey[600] : Colors.white,
