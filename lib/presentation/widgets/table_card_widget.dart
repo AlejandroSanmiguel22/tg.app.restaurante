@@ -15,7 +15,7 @@ class TableCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Definir tamaño según el estado de la mesa
-    double tableSize = table.isAttended ? 190.0 : 120.0; // Mesa atendida más grande
+    double tableSize = (table.isAttended || table.isOccupied) ? 190.0 : 120.0; // Mesas atendidas y ocupadas más grandes
     
     return GestureDetector(
       onTap: onTap,

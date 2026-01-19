@@ -274,8 +274,8 @@ class _HomePageState extends State<HomePage> {
       if (result == true) {
         context.read<TableBloc>().add(RefreshTables());
       }
-    } else if (table.isAttended) {
-      // Navegar a la pantalla de gestionar pedido y capturar el resultado
+    } else if (table.isOccupied || table.isAttended) {
+      // Navegar a la pantalla de gestionar pedido para mesas ocupadas o atendidas
       final result = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (context) => ManageOrderPage(table: table),
@@ -286,14 +286,6 @@ class _HomePageState extends State<HomePage> {
       if (result == true) {
         context.read<TableBloc>().add(RefreshTables());
       }
-    } else {
-      // Mostrar mensaje de mesa no disponible (ocupada)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('La mesa ${table.number} está ocupada'),
-          backgroundColor: Colors.orange,
-        ),
-      );
     }
   }
 

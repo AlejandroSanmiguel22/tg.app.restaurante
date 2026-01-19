@@ -17,6 +17,6 @@ class TableEntity {
 
   // Helper methods para obtener el estado de la mesa
   bool get isAvailable => status == 'libre';
-  bool get isOccupied => status == 'ocupado';
+  bool get isOccupied => status == 'ocupada';
   bool get isAttended => status == 'atendida';
 }
