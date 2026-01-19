@@ -75,7 +75,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
     _productService = ProductService(_dio);
   }
 
-  void _loadActiveOrder() async {
+  Future<void> _loadActiveOrder() async {
     setState(() {
       _isLoading = true;
     });
@@ -1328,12 +1328,17 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
   }
 
   Widget _buildActionButtons() {
+    // Determinar si la orden está en cocina
+    final isInKitchen = _currentOrder?.status == 'en_cocina';
+    
     return Row(
       children: [
-        // Botón Factura
+        // Botón Factura/Entregar según el estado
         Expanded(
           child: ElevatedButton(
-            onPressed: (_currentOrder == null || _isUpdating) ? null : _generateInvoice,
+            onPressed: (_currentOrder == null || _isUpdating) 
+                ? null 
+                : (isInKitchen ? _deliverOrder : _generateInvoice),
             style: ElevatedButton.styleFrom(
               backgroundColor: (_currentOrder == null || _isUpdating) ? Colors.grey[300] : const Color(0xFFC83636),
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1356,7 +1361,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Factura',
+                        isInKitchen ? 'Entregar' : 'Factura',
                         style: TextStyle(
                           color: (_currentOrder == null || _isUpdating) ? Colors.grey[600] : Colors.white,
                           fontSize: 14,
@@ -1366,7 +1371,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
                       ),
                       const SizedBox(width: 6),
                       SvgPicture.asset(
-                        'assets/icons/factura.svg',
+                        isInKitchen ? 'assets/icons/send.svg' : 'assets/icons/factura.svg',
                         width: 16,
                         height: 16,
                         color: (_currentOrder == null || _isUpdating) ? Colors.grey[600] : Colors.white,
@@ -1414,6 +1419,51 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
         ),
       ],
     );
+  }
+
+  void _deliverOrder() async {
+    if (_currentOrder == null) return;
+    
+    setState(() {
+      _isUpdating = true;
+    });
+
+    try {
+      // Actualizar el estado de la orden a "entregado"
+      final token = await AuthService.getToken();
+      final response = await _dio.put(
+        'https://tg-backend-restaurante-prod.onrender.com/api/orders/${_currentOrder!.id}/status',
+        data: {'status': 'entregado'},
+        options: Options(
+          headers: {
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        SnackBarService.showSuccess(
+          context: context,
+          title: '¡Orden entregada!',
+          message: 'La orden de la mesa ${widget.table.number} ha sido marcada como entregada',
+        );
+        
+        // Volver a la pantalla anterior con resultado exitoso para refrescar las mesas
+        Navigator.of(context).pop(true);
+      } else {
+        throw Exception('No se pudo actualizar el estado de la orden');
+      }
+    } catch (e) {
+      SnackBarService.showError(
+        context: context,
+        title: 'Error al entregar orden',
+        message: e.toString(),
+      );
+    } finally {
+      setState(() {
+        _isUpdating = false;
+      });
+    }
   }
 
   void _generateInvoice() async {
