@@ -1330,6 +1330,8 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
   Widget _buildActionButtons() {
     // Determinar si la orden está en cocina
     final isInKitchen = _currentOrder?.status == 'en_cocina';
+    // Solo se puede cerrar la orden si está en estado "entregado"
+    final canClose = _currentOrder?.status == 'entregado';
     
     return Row(
       children: [
@@ -1381,12 +1383,12 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
           ),
         ),
         const SizedBox(width: 12),
-        // Botón Cerrar
+        // Botón Cerrar (solo habilitado si está en estado "entregado")
         Expanded(
           child: ElevatedButton(
-            onPressed: (_currentOrder == null || _isUpdating) ? null : _closeOrder,
+            onPressed: (_currentOrder == null || _isUpdating || !canClose) ? null : _closeOrder,
             style: ElevatedButton.styleFrom(
-              backgroundColor: (_currentOrder == null || _isUpdating) ? Colors.grey[300] : const Color(0xFFC83636),
+              backgroundColor: (_currentOrder == null || _isUpdating || !canClose) ? Colors.grey[300] : const Color(0xFFC83636),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -1400,7 +1402,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
                 Text(
                   'Cerrar',
                   style: TextStyle(
-                    color: (_currentOrder == null || _isUpdating) ? Colors.grey[600] : Colors.white,
+                    color: (_currentOrder == null || _isUpdating || !canClose) ? Colors.grey[600] : Colors.white,
                     fontSize: 14,
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w600,
@@ -1411,7 +1413,7 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
                   'assets/icons/send.svg',
                   width: 16,
                   height: 16,
-                  color: (_currentOrder == null || _isUpdating) ? Colors.grey[600] : Colors.white,
+                  color: (_currentOrder == null || _isUpdating || !canClose) ? Colors.grey[600] : Colors.white,
                 ),
               ],
             ),
@@ -1746,7 +1748,128 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
     );
   }
 
-  void _performCloseOrder(bool withTip) async {
+  void _performCloseOrder(bool withTip) {
+    // Mostrar diálogo de confirmación de impresión
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icono y título
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFC83636),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.print,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Imprimir Factura',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Poppins',
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '¿Deseas imprimir la factura?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Poppins',
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Botones
+                Row(
+                  children: [
+                    // Botón No imprimir
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _executeCloseOrder(withTip, false);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[300],
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'No imprimir',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Botón Sí, imprimir
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _executeCloseOrder(withTip, true);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFC83636),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 2,
+                        ),
+                        child: const Text(
+                          'Sí, imprimir',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _executeCloseOrder(bool withTip, bool shouldPrint) async {
     if (_currentOrder == null) return;
     
     setState(() {
@@ -1762,8 +1885,8 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
         final success = await _orderService.closeOrder(_currentOrder!.id, withTip);
         
         if (success) {
-          // Verificar si hay impresora conectada
-          if (_printService.isConnected(PrinterType.main)) {
+          // Verificar si el usuario eligió imprimir
+          if (shouldPrint && _printService.isConnected(PrinterType.main)) {
             // Imprimir la factura final
             final printSuccess = await _printService.printBill(
               orderId: billData['orderId'] ?? _currentOrder!.id,
@@ -1792,11 +1915,19 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
                 message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}. Error al imprimir factura.',
               );
             }
-          } else {
+          } else if (shouldPrint && !_printService.isConnected(PrinterType.main)) {
+            // Usuario quiso imprimir pero no hay impresora
             SnackBarService.showSuccess(
               context: context,
               title: '¡Pedido cerrado!',
-              message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}. No hay impresora de facturas conectada.',
+              message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}. No hay impresora conectada.',
+            );
+          } else {
+            // Usuario no quiso imprimir
+            SnackBarService.showSuccess(
+              context: context,
+              title: '¡Pedido cerrado!',
+              message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}.',
             );
           }
           
