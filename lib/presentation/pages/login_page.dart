@@ -65,6 +65,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       child: TextField(
                         controller: _userController,
+                        enabled: true,
                         style: const TextStyle(fontFamily: 'Poppins'),
                         decoration: InputDecoration(
                           prefixIcon: Padding(
@@ -95,6 +96,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       child: TextField(
                         controller: _passwordController,
+                        enabled: true,
                         obscureText: _obscureText,
                         style: const TextStyle(fontFamily: 'Poppins'),
                         decoration: InputDecoration(

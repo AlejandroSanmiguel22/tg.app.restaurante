@@ -1886,8 +1886,8 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
         
         if (success) {
           // Verificar si el usuario eligió imprimir
-          if (shouldPrint && _printService.isConnected(PrinterType.main)) {
-            // Imprimir la factura final
+          if (shouldPrint) {
+            // Imprimir la factura final (siempre se genera el contenido, se imprime si hay impresora)
             final printSuccess = await _printService.printBill(
               orderId: billData['orderId'] ?? _currentOrder!.id,
               tableNumber: billData['tableNumber'] ?? widget.table.number,
@@ -1912,16 +1912,9 @@ class _ManageOrderPageState extends State<ManageOrderPage> {
               SnackBarService.showSuccess(
                 context: context,
                 title: '¡Pedido cerrado!',
-                message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}. Error al imprimir factura.',
+                message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}. ${_printService.isConnected(PrinterType.main) ? 'Error al imprimir factura.' : 'No hay impresora conectada.'}',
               );
             }
-          } else if (shouldPrint && !_printService.isConnected(PrinterType.main)) {
-            // Usuario quiso imprimir pero no hay impresora
-            SnackBarService.showSuccess(
-              context: context,
-              title: '¡Pedido cerrado!',
-              message: 'Pedido de la mesa ${widget.table.number} cerrado exitosamente${withTip ? ' con propina' : ' sin propina'}. No hay impresora conectada.',
-            );
           } else {
             // Usuario no quiso imprimir
             SnackBarService.showSuccess(

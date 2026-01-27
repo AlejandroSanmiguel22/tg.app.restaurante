@@ -177,21 +177,22 @@ class PrintService {
   }) async {
     print('🔵 Iniciando impresión de orden. Estado de conexión: ${isConnected(PrinterType.main)}');
     
+    // SIEMPRE generar el recibo para mostrarlo en consola
+    print('🔵 Generando contenido de orden...');
+    final receipt = _buildOrderReceipt(
+      orderItems: orderItems,
+      table: table,
+      waiterName: waiterName,
+      orderId: orderId,
+      orderTime: orderTime,
+    );
+    
     if (!isConnected(PrinterType.main)) {
-      print('🔴 No hay impresora conectada');
+      print('🟡 No hay impresora conectada - Solo se muestra en consola');
       return false;
     }
 
     try {
-      print('🔵 Generando contenido de orden...');
-      final receipt = _buildOrderReceipt(
-        orderItems: orderItems,
-        table: table,
-        waiterName: waiterName,
-        orderId: orderId,
-        orderTime: orderTime,
-      );
-
       print('🔵 Enviando datos a impresora...');
       final printer = _printers[PrinterType.main]!;
       
@@ -223,32 +224,33 @@ class PrintService {
     required int tipPercentage,
     required DateTime createdAt,
   }) async {
+    // SIEMPRE generar el recibo para mostrarlo en consola
+    final receipt = _buildBillReceipt(
+      orderId: orderId,
+      tableNumber: tableNumber,
+      waiterName: waiterName,
+      items: items,
+      subtotal: subtotal,
+      tip: tip,
+      total: total,
+      tipPercentage: tipPercentage,
+      createdAt: createdAt,
+    );
+    
     if (!isConnected(PrinterType.main)) {
-      print('🔴 No hay impresora conectada');
+      print('🟡 No hay impresora conectada - Solo se muestra en consola');
       return false;
     }
 
     try {
-      final receipt = _buildBillReceipt(
-        orderId: orderId,
-        tableNumber: tableNumber,
-        waiterName: waiterName,
-        items: items,
-        subtotal: subtotal,
-        tip: tip,
-        total: total,
-        tipPercentage: tipPercentage,
-        createdAt: createdAt,
-      );
-
       final printer = _printers[PrinterType.main]!;
       printer.connection!.output.add(receipt);
       await printer.connection!.output.allSent;
       
-      print('✅ Factura impresa exitosamente');
+      print('✅ Factura impresa exitosamente en impresora');
       return true;
     } catch (e) {
-      print('🔴 Error imprimiendo factura: $e');
+      print('🔴 Error imprimiendo factura en impresora: $e');
       return false;
     }
   }
@@ -274,6 +276,9 @@ class PrintService {
     // Configurar caracteres
     bytes.addAll([ESC, 0x74, 0x00]); // ESC t - Select character code table
 
+    // PRINT PARA CONSOLA - INICIO DE ORDEN DE COCINA
+    print('\n========== ORDEN DE COCINA ==========');
+    
     bytes.addAll(utf8.encode('*** ORDEN DE COCINA ***'));
     bytes.addAll([LF, LF]);
 
@@ -281,6 +286,8 @@ class PrintService {
     bytes.addAll([ESC, 0x61, 0x00]); // ESC a - Left alignment
 
     // Información de la mesa y mesero
+    print('Mesa: ${table.number}');
+    print('Mesero: $waiterName');
     bytes.addAll(utf8.encode('Mesa: ${table.number}'));
     bytes.addAll([LF]);
     bytes.addAll(utf8.encode('Mesero: $waiterName'));
@@ -291,16 +298,19 @@ class PrintService {
     bytes.addAll([LF]);
 
     // Productos
+    print('PRODUCTOS:');
     bytes.addAll(utf8.encode('PRODUCTOS:'));
     bytes.addAll([LF]);
 
     for (final item in orderItems) {
       // Cantidad y nombre del producto
+      print('${item.quantity}x ${item.product.name}');
       bytes.addAll(utf8.encode('${item.quantity}x ${item.product.name}'));
       bytes.addAll([LF]);
       
       // Notas si las hay
       if (item.notes != null && item.notes!.isNotEmpty) {
+        print('   Nota: ${item.notes}');
         bytes.addAll(utf8.encode('   Nota: ${item.notes}'));
         bytes.addAll([LF]);
       }
@@ -312,15 +322,18 @@ class PrintService {
     bytes.addAll([LF, LF]);
 
     // ID de la orden
+    print('Orden ID: $orderId');
     bytes.addAll(utf8.encode('Orden ID: $orderId'));
     bytes.addAll([LF]);
 
     // Fecha y hora
     final formattedDate = _formatDateTime(orderTime);
+    print('Fecha/Hora: $formattedDate');
     bytes.addAll(utf8.encode(formattedDate));
     bytes.addAll([LF, LF]);
 
     // Línea separadora final
+    print('======================================\n');
     bytes.addAll(utf8.encode('--------------------------------'));
     bytes.addAll([LF, LF, LF]);
 
@@ -357,6 +370,14 @@ class PrintService {
 
     // Centrar encabezado
     bytes.addAll([ESC, 0x61, 0x01]); // ESC a - Center alignment
+    
+    // PRINT PARA CONSOLA - INICIO DE FACTURA
+    print('\n========== FACTURA ==========');
+    print('Restaurante Arroz Paisa Arrieros');
+    print('JOHN FREDY NUNEZ RENGIFO');
+    print('NIT : 93.413.545-3');
+    print('REGIMEN SIMPLIFICADO');
+    
     bytes.addAll(utf8.encode('Restaurante Arroz Paisa Arrieros'));
     bytes.addAll([LF]);
     bytes.addAll(utf8.encode('JOHN FREDY NUNEZ RENGIFO'));
@@ -371,16 +392,22 @@ class PrintService {
 
     // Fecha y hora
     final formattedDate = _formatBillDateTime(createdAt);
+    print('REG  $formattedDate');
     bytes.addAll(utf8.encode('REG  $formattedDate'));
     bytes.addAll([LF, LF]);
 
     // Items
+    print('--- ITEMS ---');
     for (final item in items) {
-      final quantity = item['quantity']?.toString() ?? '1';
+      final quantity = (item['quantity'] as num?)?.toInt() ?? 1;
       final productName = item['productName']?.toString() ?? '';
       final unitPrice = (item['unitPrice'] as num?)?.toDouble() ?? 0.0;
+      final totalPrice = unitPrice * quantity;
       
-      bytes.addAll(utf8.encode('$quantity  $productName.      ${_formatPrice(unitPrice)}'));
+      final itemLine = '$quantity  $productName.      ${_formatPrice(totalPrice)}';
+      print(itemLine);
+      
+      bytes.addAll(utf8.encode(itemLine));
       bytes.addAll([LF]);
       bytes.addAll([LF]);
     }
@@ -390,10 +417,12 @@ class PrintService {
     bytes.addAll([LF]);
 
     // SubTotal
+    print('SubTotal: ${_formatPrice(subtotal)}');
     bytes.addAll(utf8.encode('SubTotal             ${_formatPrice(subtotal)}'));
     bytes.addAll([LF]);
 
     // Propina
+    print('Propina: ${_formatPrice(tip)}');
     bytes.addAll(utf8.encode('Propina Voluntaria   ${_formatPrice(tip)}    '));
     //bytes.addAll([LF, LF]);
 
@@ -402,6 +431,7 @@ class PrintService {
     bytes.addAll([LF]);
 
     // Total (en negrita y más grande)
+    print('TOTAL: ${_formatPrice(total)}');
     bytes.addAll([ESC, 0x45, 0x01]); // ESC E - Bold on
     bytes.addAll([ESC, 0x21, 0x30]); // ESC ! - Double width and height
     bytes.addAll(utf8.encode('TOTAL   ${_formatPrice(total)}')); 
@@ -427,6 +457,7 @@ class PrintService {
 
     // Centrar mensaje final
     bytes.addAll([ESC, 0x61, 0x01]); // ESC a - Center alignment
+    print('==============================\n');
     bytes.addAll(utf8.encode('GRACIAS POR TU VISITA'));
     bytes.addAll([LF]);
     bytes.addAll(utf8.encode('ESPERAMOS VOLVERTE A VER PRONTO!'));
@@ -460,23 +491,27 @@ class PrintService {
   }
 
   String _formatBillDateTime(DateTime dateTime) {
-    final year = dateTime.year;
-    final month = dateTime.month.toString().padLeft(2, '0');
-    final day = dateTime.day.toString().padLeft(2, '0');
-    final hour = dateTime.hour.toString().padLeft(2, '0');
-    final minute = dateTime.minute.toString().padLeft(2, '0');
+    // Convertir de UTC a hora local de Colombia (UTC-5)
+    final localDateTime = dateTime.toUtc().subtract(const Duration(hours: 5));
+    final year = localDateTime.year;
+    final month = localDateTime.month.toString().padLeft(2, '0');
+    final day = localDateTime.day.toString().padLeft(2, '0');
+    final hour = localDateTime.hour.toString().padLeft(2, '0');
+    final minute = localDateTime.minute.toString().padLeft(2, '0');
     
     return '$year-$month-$day     $hour:$minute';
   }
 
   /// Formatea la fecha y hora para la orden de cocina
   String _formatDateTime(DateTime dateTime) {
-    final year = dateTime.year;
-    final month = dateTime.month.toString().padLeft(2, '0');
-    final day = dateTime.day.toString().padLeft(2, '0');
-    final hour = dateTime.hour.toString().padLeft(2, '0');
-    final minute = dateTime.minute.toString().padLeft(2, '0');
-    final second = dateTime.second.toString().padLeft(2, '0');
+    // Convertir de UTC a hora local de Colombia (UTC-5)
+    final localDateTime = dateTime.toUtc().subtract(const Duration(hours: 5));
+    final year = localDateTime.year;
+    final month = localDateTime.month.toString().padLeft(2, '0');
+    final day = localDateTime.day.toString().padLeft(2, '0');
+    final hour = localDateTime.hour.toString().padLeft(2, '0');
+    final minute = localDateTime.minute.toString().padLeft(2, '0');
+    final second = localDateTime.second.toString().padLeft(2, '0');
     
     return '$year-$month-$day $hour:$minute:$second';
   }
