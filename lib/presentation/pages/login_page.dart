@@ -19,13 +19,16 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bannerHeight = MediaQuery.of(context).size.height * 0.30;
+    
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(), // Ocultar teclado al tocar fuera
       child: Scaffold(
         backgroundColor: Colors.white,
-        resizeToAvoidBottomInset: false, // Evita que el scaffold se redimensione con el teclado
+        resizeToAvoidBottomInset: true, // Permitir que se redimensione con el teclado
         body: Stack(
           children: [
+            // Banner fijo en la parte superior
             Positioned(
               top: 37,
               left: 0,
@@ -36,12 +39,17 @@ class _LoginPageState extends State<LoginPage> {
                 fit: BoxFit.fitWidth,
               ),
             ),
+            // Contenido con scroll
             SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 75.0),
-                child: Column(
-                  children: [
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.30),
+              child: Column(
+                children: [
+                  SizedBox(height: bannerHeight),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 75.0),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 20),
                     const Align(
                       alignment: Alignment.center,
                       child: Text(
@@ -218,8 +226,11 @@ class _LoginPageState extends State<LoginPage> {
                       },
                     ),
                     const SizedBox(height: 32),
-                  ],
-                ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
